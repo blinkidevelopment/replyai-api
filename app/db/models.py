@@ -48,6 +48,7 @@ class Empresa(Base):
     slug = Column(String, index=True)
     nome = Column(String)
     token = Column(String, unique=True, nullable=False)
+    fuso_horario = Column(String)
     assistentePadrao = Column(Integer, ForeignKey("assistentes.id"))
 
     assistente = relationship("Assistente", backref="assistente_padrao", foreign_keys=[assistentePadrao])

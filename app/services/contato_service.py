@@ -1,5 +1,6 @@
 from datetime import datetime
 
+import pytz
 from sqlalchemy.orm import Session
 
 from app.db.models import Contato, Assistente, Empresa
@@ -7,6 +8,7 @@ from app.utils.assistant import Assistant
 
 
 async def obter_criar_contato(contact_id: str, empresa: Empresa, db: Session):
+    timezone = pytz.timezone(empresa.fuso_horario)
     contato = db.query(Contato).filter_by(contactId=contact_id).first()
 
     if contato is None:
@@ -17,7 +19,7 @@ async def obter_criar_contato(contact_id: str, empresa: Empresa, db: Session):
                 contactId=contact_id,
                 threadId="",
                 assistenteAtual=assistente_db.id,
-                lastMessage=datetime.now(),
+                lastMessage=datetime.now(timezone),
                 recallCount=0,
                 appointmentConfirmation=False
             )
@@ -25,7 +27,7 @@ async def obter_criar_contato(contact_id: str, empresa: Empresa, db: Session):
             db.commit()
             db.refresh(contato)
     else:
-        contato.lastMessage = datetime.now()
+        contato.lastMessage = datetime.now(timezone)
         db.commit()
         assistente_db = db.query(Assistente).filter_by(id=contato.assistenteAtual, id_empresa=empresa.id).first()
     assistente = Assistant(nome=assistente_db.nome, id=assistente_db.assistantId)

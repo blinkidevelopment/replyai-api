@@ -14,7 +14,7 @@ async def verificar_data_sugerida(
         empresa: Empresa,
         db: Session
 ):
-    timezone = pytz.timezone("America/Sao_Paulo")
+    timezone = pytz.timezone(empresa.fuso_horario)
     hoje = datetime.now(timezone)
     hoje_formatado = hoje.strftime("%d/%m/%Y, %A")
     amanha = hoje + timedelta(days=1)
@@ -75,7 +75,7 @@ async def cadastrar_evento(
         empresa: Empresa,
         db: Session
 ):
-    timezone = pytz.timezone("America/Sao_Paulo")
+    timezone = pytz.timezone(empresa.fuso_horario)
     hoje = datetime.now(timezone)
     hoje_formatado = hoje.strftime("%d/%m/%Y, %A")
 
