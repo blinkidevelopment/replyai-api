@@ -4,10 +4,19 @@ import pytz
 from sqlalchemy.orm import Session
 
 from app.db.models import Contato, Assistente, Empresa
+from app.schemas.digisac_schema import DigisacRequest
+from app.schemas.evolutionapi_schema import EvolutionAPIRequest
 from app.utils.assistant import Assistant
 
 
-async def obter_criar_contato(contact_id: str, empresa: Empresa, db: Session):
+async def obter_criar_contato(request: DigisacRequest | EvolutionAPIRequest, empresa: Empresa, db: Session):
+    if isinstance(request, DigisacRequest):
+        contact_id = request.data.contactId
+    elif isinstance(request, EvolutionAPIRequest):
+        contact_id = request.data.key.remoteJid
+    else:
+        raise ValueError("O corpo da requisição é de formato inválido")
+
     timezone = pytz.timezone(empresa.fuso_horario)
     contato = db.query(Contato).filter_by(contactId=contact_id).first()
 

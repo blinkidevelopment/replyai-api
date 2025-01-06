@@ -7,6 +7,7 @@ from typing import List
 
 import requests
 
+from app.schemas.digisac_schema import DigisacRequest
 from app.utils.message_client import MessageClient, DadosContato
 
 
@@ -81,10 +82,10 @@ class Digisac(MessageClient):
         resposta = requests.post(endpoint, headers=self.headers, json=request)
         return resposta
 
-    def obter_arquivo(self, messageId: str):
+    def obter_arquivo(self, request: DigisacRequest):
         tentativas = 0
         url = ""
-        endpoint = f"{self.base_url}/messages/{messageId}?include=file"
+        endpoint = f"{self.base_url}/messages/{request.data.message.id}?include=file"
 
         while url == "" and tentativas < 5:
             try:
@@ -123,8 +124,8 @@ class Digisac(MessageClient):
             return None
         return None
 
-    def obter_dados_contato(self, contactId: str):
-        endpoint = f"{self.base_url}/contacts/{contactId}"
+    def obter_dados_contato(self, request: DigisacRequest):
+        endpoint = f"{self.base_url}/contacts/{request.data.contactId}"
         resposta = requests.get(endpoint, headers=self.headers)
 
         if resposta.status_code == 200:

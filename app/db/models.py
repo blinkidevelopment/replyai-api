@@ -49,6 +49,7 @@ class Empresa(Base):
     nome = Column(String)
     token = Column(String, unique=True, nullable=False)
     fuso_horario = Column(String)
+    message_client_type = Column(String)
     assistentePadrao = Column(Integer, ForeignKey("assistentes.id"))
 
     assistente = relationship("Assistente", backref="assistente_padrao", foreign_keys=[assistentePadrao])
@@ -63,6 +64,17 @@ class Agenda(Base):
     id_empresa = Column(Integer, ForeignKey("empresas.id"))
 
     empresa = relationship("Empresa", backref="agenda")
+
+
+class EvolutionAPIClient(Base):
+    __tablename__ = "evolutionapi_clients"
+
+    id = Column(Integer, primary_key=True, index=True)
+    apiKey = Column(String)
+    instanceName = Column(String)
+    id_empresa = Column(Integer, ForeignKey("empresas.id"))
+
+    empresa = relationship("Empresa", backref="evolutionapi_client")
 
 
 class DigisacClient(Base):

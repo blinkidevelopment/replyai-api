@@ -10,6 +10,10 @@ class MessageClient(ABC):
     def obter_dados_contato(self, **kwargs):
         pass
 
+    @abstractmethod
+    def obter_arquivo(self, **kwargs):
+        pass
+
 
 class DadosContato:
     def __init__(self, contact_name: str, phone_number: str):
