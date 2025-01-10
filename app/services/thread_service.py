@@ -17,11 +17,12 @@ async def rodar_criar_thread(
     if mensagem:
         assistente.adicionar_mensagens([mensagem], [], contato.threadId or None)
 
+    if dados_contato:
+        assistente.adicionar_mensagens([dados_contato.__str__()], [], None)
+
     resposta, thread_id = assistente.criar_rodar_thread(thread_id=contato.threadId)
 
     if not contato.threadId:
-        if dados_contato is not None:
-            assistente.adicionar_mensagens([dados_contato.__str__()], [], None)
         contato.threadId = thread_id
         db.commit()
 
