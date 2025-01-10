@@ -8,7 +8,7 @@ from app.services.contato_service import obter_criar_contato
 from app.services.direcionamento_service import direcionar
 from app.services.empresa_service import obter_empresa
 from app.services.thread_service import rodar_criar_thread
-from app.services.mensagem_service import obter_mensagem_audio
+from app.services.mensagem_service import obter_mensagem_audio, enviar_mensagem
 from app.db.database import obter_sessao
 from app.utils.evolutionapi import EvolutionAPI
 
@@ -48,4 +48,11 @@ async def responder(
         db.close()
         return resultado
     except Exception as e:
+        if "AIResponseError" in str(e):
+            dados_empresa = await obter_empresa(slug, token, db)
+            if dados_empresa is not None:
+                empresa, message_client, agenda_client = dados_empresa
+                contato, assistente = await obter_criar_contato(request, None, empresa, db)
+                await enviar_mensagem(empresa.mensagem_erro_ia, False, contato, message_client, assistente, db)
+            pass
         return {"erro": str(e)}

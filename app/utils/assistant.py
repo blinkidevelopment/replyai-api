@@ -159,45 +159,49 @@ class Assistant:
                     await self.transcrever_audio(arquivo)
         return id_arquivos
 
-    def criar_rodar_thread(self):
-        run = self.client.beta.threads.create_and_run(
-            assistant_id=self.id,
-            thread={
-                "messages": self.mensagens
-            }
-        )
+    def criar_rodar_thread(self, thread_id: str | None = None):
+        max_tentantivas = 5
+        tentativa = 0
 
-        while run.status != "completed":
-            run = self.client.beta.threads.runs.retrieve(
-                thread_id=run.thread_id,
-                run_id=run.id
-            )
-            time.sleep(2)
+        while tentativa < max_tentantivas:
+            tentativa += 1
 
-        resultado = self.client.beta.threads.messages.list(
-            thread_id=run.thread_id
-        )
+            try:
+                if thread_id:
+                    run = self.client.beta.threads.runs.create(
+                        assistant_id=self.id,
+                        thread_id=thread_id
+                    )
+                else:
+                    run = self.client.beta.threads.create_and_run(
+                        assistant_id=self.id,
+                        thread={
+                            "messages": self.mensagens
+                        }
+                    )
 
-        return resultado.data[0].content[0].text.value, run.thread_id
+                while run.status not in ["completed", "canceled", "failed", "expired"]:
+                    run = self.client.beta.threads.runs.retrieve(
+                        thread_id=run.thread_id,
+                        run_id=run.id
+                    )
+                    time.sleep(2)
 
-    def rodar_thread(self, thread_id: str):
-        run = self.client.beta.threads.runs.create(
-            assistant_id=self.id,
-            thread_id=thread_id
-        )
+                if run.status in ["canceled", "failed", "expired"]:
+                    print(f"Tentativa {tentativa}: Erro na geração de resposta (status: {run.status}). Tentando novamente...")
+                    time.sleep(10)
+                    continue
 
-        while run.status != "completed":
-            run = self.client.beta.threads.runs.retrieve(
-                thread_id=run.thread_id,
-                run_id=run.id
-            )
-            time.sleep(2)
+                resultado = self.client.beta.threads.messages.list(
+                    thread_id=run.thread_id
+                )
 
-        resultado = self.client.beta.threads.messages.list(
-            thread_id=run.thread_id
-        )
-
-        return resultado.data[0].content[0].text.value
+                return resultado.data[0].content[0].text.value, run.thread_id
+            except Exception as e:
+                print(f"Tentantiva {tentativa}: Ocorreu um erro inesperado: {e}")
+                time.sleep(10)
+                continue
+        raise Exception(f"AIResponseError: Falha ao gerar uma resposta após {max_tentantivas} tentativas")
 
     def listar_mensagens_thread(self, thread_id: str):
         mensagens = self.client.beta.threads.messages.list(thread_id)

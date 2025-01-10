@@ -59,6 +59,7 @@ class Empresa(Base):
     recall_ativo = Column(Boolean)
     confirmar_agendamentos_ativo = Column(Boolean)
     tipo_cancelamento_evento = Column(String)
+    mensagem_erro_ia = Column(String)
     assistentePadrao = Column(Integer, ForeignKey("assistentes.id"))
 
     assistente = relationship("Assistente", backref="assistente_padrao", foreign_keys=[assistentePadrao])

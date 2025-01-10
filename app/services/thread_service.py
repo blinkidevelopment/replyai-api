@@ -17,14 +17,14 @@ async def rodar_criar_thread(
     if mensagem:
         assistente.adicionar_mensagens([mensagem], [], contato.threadId or None)
 
-    if contato.threadId:
-        resposta = assistente.rodar_thread(thread_id=contato.threadId)
-    else:
+    resposta, thread_id = assistente.criar_rodar_thread(thread_id=contato.threadId)
+
+    if not contato.threadId:
         if dados_contato is not None:
             assistente.adicionar_mensagens([dados_contato.__str__()], [], None)
-        resposta, thread_id = assistente.criar_rodar_thread()
         contato.threadId = thread_id
         db.commit()
+
     resposta = json.loads(resposta)
     resposta_obj = Resposta.from_dict(resposta)
     return resposta_obj

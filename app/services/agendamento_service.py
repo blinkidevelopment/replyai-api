@@ -39,7 +39,9 @@ async def verificar_data_sugerida(
     if assistente_db is not None:
         assistente = Assistant(nome=assistente_db.nome, id=assistente_db.assistantId)
         assistente.adicionar_mensagens(mensagens=[instrucao.__str__()], id_arquivos=[], thread_id=contato.threadId)
-        resposta = RespostaDataSugerida.from_dict(json.loads(assistente.rodar_thread(thread_id=contato.threadId)))
+
+        resposta, _ = assistente.criar_rodar_thread(thread_id=contato.threadId)
+        resposta = RespostaDataSugerida.from_dict(json.loads(resposta))
 
         if resposta.tag == "DATA VÁLIDA":
             agendas = await agenda_client.obter_horarios(agendas=[endereco_agenda], data=resposta.data_sugerida, usuario=agenda_client.usuario_padrao)
@@ -63,7 +65,9 @@ async def verificar_data_sugerida(
                         instrucao.acao = "agenda_disponivel"
                     instrucao.dados = dados_agenda
                     assistente.adicionar_mensagens(mensagens=[instrucao.__str__()], id_arquivos=[], thread_id=contato.threadId)
-                    resposta = RespostaDataSugerida.from_dict(json.loads(assistente.rodar_thread(thread_id=contato.threadId)))
+
+                    resposta, _ = assistente.criar_rodar_thread(thread_id=contato.threadId)
+                    resposta = RespostaDataSugerida.from_dict(json.loads(resposta))
                     return resposta.mensagem
         else:
             return resposta.mensagem
@@ -96,7 +100,9 @@ async def cadastrar_evento(
     if assistente_db is not None:
         assistente = Assistant(nome=assistente_db.nome, id=assistente_db.assistantId)
         assistente.adicionar_mensagens(mensagens=[instrucao.__str__()], id_arquivos=[], thread_id=contato.threadId)
-        resposta = RespostaAgendamento.from_dict(json.loads(assistente.rodar_thread(thread_id=contato.threadId)))
+
+        resposta, _ = assistente.criar_rodar_thread(thread_id=contato.threadId)
+        resposta = RespostaAgendamento.from_dict(json.loads(resposta))
 
         if resposta.tag == "DATA VÁLIDA":
             await agenda_client.cadastrar_evento(agenda=endereco_agenda, data=resposta.data_hora_agendamento, titulo=resposta.titulo_evento)
@@ -155,7 +161,7 @@ async def extrair_titulo_agenda_evento(
     if assistente_db is not None:
         assistente = Assistant(nome=assistente_db.nome, id=assistente_db.assistantId)
         assistente.adicionar_mensagens(mensagens=[instrucao.__str__()], id_arquivos=[], thread_id=thread_id)
-        resposta = assistente.rodar_thread(thread_id)
+        resposta, _ = assistente.criar_rodar_thread(thread_id)
 
         if reagendamento:
             resposta_obj = RespostaTituloAgendaDataNova.from_dict(json.loads(resposta))
