@@ -11,6 +11,10 @@ class MessageClient(ABC):
         pass
 
     @abstractmethod
+    def obter_id_contato(self, telefone: str, nome_contato: str):
+        pass
+
+    @abstractmethod
     def obter_arquivo(self, **kwargs):
         pass
 

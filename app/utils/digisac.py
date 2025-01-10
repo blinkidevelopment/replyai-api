@@ -12,13 +12,14 @@ from app.utils.message_client import MessageClient, DadosContato
 
 
 class Digisac(MessageClient):
-    def __init__(self, slug: str, defaultUserId: str, defaultAssistantName: str, token: str):
+    def __init__(self, slug: str, service_id: str, defaultUserId: str, defaultAssistantName: str, token: str):
         self.headers = {
             "Authorization": f"Bearer {token}",
             "Content-Type": "application/json"
         }
         self.slug = slug
         self.base_url = f"https://{slug}.digisac.me/api/v1"
+        self.service_id = service_id
         self.defaultUserId = defaultUserId
         self.defaultAssistantName = defaultAssistantName
 
@@ -132,4 +133,51 @@ class Digisac(MessageClient):
             resposta_obj = json.loads(resposta.content)
             dados_contato = DadosContato(contact_name=resposta_obj.get("name", ""), phone_number=resposta_obj.get("data", {}).get("number", ""))
             return dados_contato
+        return None
+
+    def obter_id_contato(self, telefone: str, nome_contato: str):
+        id_contato = None
+
+        endpoint = f"{self.base_url}/contacts"
+        resposta = requests.get(endpoint, headers=self.headers, params={
+            "where[data.number]": telefone,
+            "where[serviceId]": self.service_id
+        })
+
+        if resposta.status_code == 200:
+            resposta_obj = json.loads(resposta.content)
+            if resposta_obj.get("total", 0) > 0:
+                data = resposta_obj.get("data")
+                if len(data) > 0:
+                    id_contato = data[0].get("id", None)
+
+        if id_contato is None:
+            resposta_cadastro = requests.post(endpoint, headers=self.headers, data={
+                "serviceId": self.service_id,
+                "internalName": nome_contato,
+                "alternativeName": nome_contato,
+                "number": telefone
+            })
+
+            if resposta_cadastro.status_code == 200:
+                resposta_cadastro_obj = json.loads(resposta_cadastro.content)
+                id_contato = resposta_cadastro_obj.get("id", None)
+        return id_contato
+
+    def obter_ticket_ultima_mensagem(self, contact_id: str):
+        endpoint = f"{self.base_url}/contacts/{contact_id}"
+        resposta = requests.get(endpoint, headers=self.headers)
+
+        if resposta.status_code == 200:
+            resposta_obj = json.loads(resposta.content)
+            return resposta_obj.get("currentTicketId", None), resposta_obj.get("lastMessageId", None)
+        return None
+
+    def obter_origem_mensagem(self, message_id: str):
+        endpoint = f"{self.base_url}/messages/{message_id}"
+        resposta = requests.get(endpoint, headers=self.headers)
+
+        if resposta.status_code == 200:
+            resposta_obj = json.loads(resposta.content)
+            return resposta_obj.get("origin", None)
         return None

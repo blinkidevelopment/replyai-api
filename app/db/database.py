@@ -16,3 +16,12 @@ def obter_sessao():
         yield db
     finally:
         db.close()
+
+
+def retornar_sessao():
+    db = SessionLocal()
+    try:
+        return db
+    except Exception as e:
+        print(f"Erro ao criar a sessão: {e}")
+        db.close()

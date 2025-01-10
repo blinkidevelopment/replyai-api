@@ -2,6 +2,7 @@ import os
 import re
 import base64
 import mimetypes
+import threading
 
 import requests
 from io import BytesIO
@@ -50,9 +51,26 @@ class EvolutionAPI(MessageClient):
         resposta = requests.post(endpoint, headers=self.headers, json=request)
         return resposta
 
+    def enviar_presenca(self, contact_id: str, audio: bool):
+        numero = re.match(r"(\d+)@", contact_id).group(1)
+        endpoint = f"{self.base_url}/chat/sendPresence/{self.instance}"
+        request = {
+            "number": numero,
+            "options": {
+                "delay": 80000,
+                "presence": "recording" if audio else "composing"
+            }
+        }
+
+        funcao = lambda url, json, headers : requests.post(url, json=json, headers=headers)
+        threading.Thread(target=funcao, args=(endpoint, request, self.headers), daemon=True).start()
+
     def obter_dados_contato(self, request: EvolutionAPIRequest):
         return DadosContato(contact_name=request.data.pushName,
                             phone_number=re.match(r"(\d+)@", request.data.key.remoteJid).group(1))
+
+    def obter_id_contato(self, telefone: str, nome_contato: str):
+        return f"{telefone}@s.whatsapp.net"
 
     def obter_arquivo(self, request: EvolutionAPIRequest):
         audio_bytes = base64.b64decode(request.data.message.base64)

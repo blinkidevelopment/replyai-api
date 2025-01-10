@@ -1,0 +1,80 @@
+import os
+from datetime import datetime, timedelta
+
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
+from apscheduler.triggers.interval import IntervalTrigger
+from sqlalchemy import or_, and_
+
+from app.db.database import retornar_sessao
+from app.db.models import Empresa, Contato
+from app.jobs.sub_jobs import enviar_retomada_conversa, enviar_confirmacao_consulta
+
+
+async def retomar_conversa():
+    db = retornar_sessao()
+    agora = datetime.now()
+
+    try:
+        empresas = db.query(Empresa).filter_by(recall_ativo=True).all()
+
+        for empresa in empresas:
+            timeout_padrao = empresa.recall_timeout_minutes or 60
+            timeout_padrao_time = agora - timedelta(minutes=timeout_padrao)
+
+            timeout_final = empresa.final_recall_timeout_minutes or 1440
+            timeout_final_time = agora - timedelta(minutes=timeout_final)
+
+            interacoes_inativas = db.query(Contato).filter(
+                Contato.id_empresa == empresa.id,
+                or_(
+                    and_(
+                        Contato.lastMessage <= timeout_padrao_time,
+                        Contato.recallCount < empresa.recall_quant - 1
+                    ),
+                    and_(
+                        Contato.lastMessage <= timeout_final_time,
+                        Contato.recallCount == empresa.recall_quant - 1
+                    )
+                )
+            ).all()
+
+            for contato in interacoes_inativas:
+                await enviar_retomada_conversa(contato, empresa, db)
+    except Exception as e:
+        print(f"Erro ao processar: {e}")
+    finally:
+        db.close()
+
+
+async def confirmar_agendamento():
+    db = retornar_sessao()
+    data_atual = datetime.now()
+    dia_seguinte = data_atual + timedelta(days=1)
+
+    try:
+        empresas = db.query(Empresa).filter_by(confirmar_agendamentos_ativo=True).all()
+
+        for empresa in empresas:
+            await enviar_confirmacao_consulta(dia_seguinte.strftime("%Y-%m-%d"), data_atual.strftime("%Y-%m-%dT%H:%M:%S"), empresa, db)
+    except Exception as e:
+        print(f"Erro ao processar: {e}")
+    finally:
+        db.close()
+
+
+scheduler = AsyncIOScheduler()
+
+scheduler.add_job(
+    retomar_conversa,
+    trigger=IntervalTrigger(minutes=int(os.getenv("RECALL_JOB_MINUTE_INTERVAL", 30))),
+    id="retomar_conversa_job"
+)
+
+scheduler.add_job(
+    confirmar_agendamento,
+    trigger=CronTrigger(
+        hour=os.getenv("CONFIRMATION_JOB_HOUR_INTERVAL", 12),
+        minute=os.getenv("CONFIRMATION_JOB_MINUTE_INTERVAL", 0)),
+    id="confirmar_agendamento_job"
+)

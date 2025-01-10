@@ -1,5 +1,4 @@
 import io
-import json
 from typing import List
 
 from fastapi import UploadFile
@@ -229,27 +228,7 @@ class Assistant:
             thread_id=run.thread_id
         )
 
-        resposta_obj = json.loads(resultado.data[0].content[0].text.value)
-        return resposta_obj[next(iter(resposta_obj))]
-
-    def rodar_instrucao_agendar(self, thread_id: str):
-        run = self.client.beta.threads.runs.create(
-            assistant_id=self.id,
-            thread_id=thread_id
-        )
-
-        while run.status != "completed":
-            run = self.client.beta.threads.runs.retrieve(
-                thread_id=run.thread_id,
-                run_id=run.id
-            )
-            time.sleep(2)
-
-        resultado = self.client.beta.threads.messages.list(
-            thread_id=run.thread_id
-        )
-
-        return json.loads(resultado.data[0].content[0].text.value)
+        return resultado.data[0].content[0].text.value
 
 
 class Resposta:
@@ -303,6 +282,49 @@ class RespostaAgendamento:
         )
 
 
+class RespostaConfirmacao:
+    def __init__(self, cliente: str, telefone: str, resposta_confirmacao: Resposta):
+        self.cliente = cliente
+        self.telefone = telefone
+        self.resposta_confirmacao = resposta_confirmacao
+
+    @classmethod
+    def from_dict(cls, data: dict):
+        return cls(
+            cliente=data["cliente"],
+            telefone=data["telefone"],
+            resposta_confirmacao=Resposta.from_dict(data["resposta_confirmacao"])
+        )
+
+
+class RespostaTituloAgenda:
+    def __init__(self, endereco_agenda: str, titulo: str):
+        self.endereco_agenda = endereco_agenda
+        self.titulo = titulo
+
+    @classmethod
+    def from_dict(cls, data: dict):
+        return cls(
+            endereco_agenda=data["endereco_agenda"],
+            titulo=data["titulo"]
+        )
+
+
+class RespostaTituloAgendaDataNova:
+    def __init__(self, endereco_agenda: str, titulo: str, data_nova: str):
+        self.endereco_agenda = endereco_agenda
+        self.titulo = titulo
+        self.data_nova = data_nova
+
+    @classmethod
+    def from_dict(cls, data: dict):
+        return cls(
+            endereco_agenda=data["endereco_agenda"],
+            titulo=data["titulo"],
+            data_nova=data["data_nova"]
+        )
+
+
 class DadosData:
     def __init__(self, hoje: str, sugestao_inicial: str, numero_semana: str, semana_par_impar: str):
         self.hoje = hoje
@@ -337,6 +359,26 @@ class DadosAgenda:
         }
 
 
+class DadosEvento:
+    def __init__(self, email_agenda: str, titulo: str, local: str, data_hora_inicio: str, data_hora_fim: str, data_hora_atual: str):
+        self.email_agenda = email_agenda
+        self.titulo = titulo
+        self.local = local
+        self.data_hora_inicio = data_hora_inicio
+        self.data_hora_fim = data_hora_fim
+        self.data_hora_atual = data_hora_atual
+
+    def to_dict(self):
+        return {
+            "email_agenda": self.email_agenda,
+            "titulo": self.titulo,
+            "local": self.local,
+            "data_hora_inicio": self.data_hora_inicio,
+            "data_hora_fim": self.data_hora_fim,
+            "data_hora_atual": self.data_hora_atual
+        }
+
+
 class DadosEventoFechado:
     def __init__(self, titulo: str, disponibilidade: str):
         self.titulo_evento = titulo
@@ -350,15 +392,16 @@ class DadosEventoFechado:
 
 
 class Instrucao:
-    def __init__(self, acao: str, dados: DadosData | DadosAgenda | DadosEventoFechado):
+    def __init__(self, acao: str, dados: DadosData | DadosAgenda | DadosEvento | DadosEventoFechado | None):
         self.acao = acao
         self.dados = dados
 
     def to_dict(self):
-        return {
-            "acao": self.acao,
-            "dados": self.dados.to_dict()
-        }
+        obj = {"acao": self.acao}
+        if self.dados is not None:
+            obj["dados"] = self.dados.to_dict()
+
+        return obj
 
     def __str__(self):
         import json

@@ -13,6 +13,9 @@ class Contato(Base):
     lastMessage = Column(DateTime)
     recallCount = Column(Integer)
     appointmentConfirmation = Column(Boolean)
+    id_empresa = Column(Integer, ForeignKey("empresas.id"))
+
+    empresa = relationship("Empresa", backref="contatos")
 
 
 class Assistente(Base):
@@ -50,6 +53,12 @@ class Empresa(Base):
     token = Column(String, unique=True, nullable=False)
     fuso_horario = Column(String)
     message_client_type = Column(String)
+    recall_timeout_minutes = Column(Integer)
+    final_recall_timeout_minutes = Column(Integer)
+    recall_quant = Column(Integer)
+    recall_ativo = Column(Boolean)
+    confirmar_agendamentos_ativo = Column(Boolean)
+    tipo_cancelamento_evento = Column(String)
     assistentePadrao = Column(Integer, ForeignKey("assistentes.id"))
 
     assistente = relationship("Assistente", backref="assistente_padrao", foreign_keys=[assistentePadrao])
@@ -82,6 +91,7 @@ class DigisacClient(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     digisacSlug = Column(String)
+    service_id = Column(String)
     digisacToken = Column(String)
     digisacDefaultUser = Column(String)
     id_empresa = Column(Integer, ForeignKey("empresas.id"))
@@ -89,7 +99,7 @@ class DigisacClient(Base):
     empresa = relationship("Empresa", backref="digisac_client")
 
 
-class Departamentos(Base):
+class Departamento(Base):
     __tablename__ = "departamentos"
 
     id = Column(Integer, primary_key=True, index=True)

@@ -8,8 +8,9 @@ from app.services.contato_service import obter_criar_contato
 from app.services.direcionamento_service import direcionar
 from app.services.empresa_service import obter_empresa
 from app.services.thread_service import rodar_criar_thread
-from app.services.transcricao_service import transcrever_audio
+from app.services.mensagem_service import obter_mensagem_audio
 from app.db.database import obter_sessao
+from app.utils.evolutionapi import EvolutionAPI
 
 
 router = APIRouter()
@@ -31,8 +32,12 @@ async def responder(
         dados_empresa = await obter_empresa(slug, token, db)
         if dados_empresa is not None:
             empresa, message_client, agenda_client = dados_empresa
-            contato, assistente = await obter_criar_contato(request, empresa, db)
-            mensagem, audio = await transcrever_audio(request, message_client, assistente)
+            contato, assistente = await obter_criar_contato(request, None, empresa, db)
+            mensagem, audio = await obter_mensagem_audio(request, message_client, assistente)
+
+            if isinstance(message_client, EvolutionAPI):
+                message_client.enviar_presenca(request.data.key.remoteJid, audio)
+
             if not contato.threadId:
                 dados_contato = message_client.obter_dados_contato(request)
             else:

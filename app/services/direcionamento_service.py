@@ -1,7 +1,9 @@
 from sqlalchemy.orm import Session
 
-from app.db.models import Contato, Departamentos, Empresa, Agenda, DigisacClient, Assistente
-from app.services.agendamento_service import verificar_data_sugerida, cadastrar_evento
+from app.db.models import Contato, Empresa
+from app.services.agendamento_service import verificar_data_sugerida, cadastrar_evento, extrair_titulo_agenda_evento
+from app.services.contato_service import encerrar_contato, atualizar_assistente_atual_contato, transferir_contato
+from app.services.empresa_service import obter_assistente, obter_endereco_agenda, obter_departamento
 from app.services.mensagem_service import enviar_mensagem
 from app.services.thread_service import rodar_criar_thread
 from app.utils.agenda_client import AgendaClient
@@ -14,47 +16,59 @@ async def direcionar(
         resposta: Resposta,
         audio: bool,
         message_client: MessageClient,
-        agenda_client: AgendaClient,
+        agenda_client: AgendaClient | None,
         empresa: Empresa,
         contato: Contato,
         assistente: Assistant,
         db: Session
 ):
     match resposta.atividade:
-        case "R":
+        case "R": # responder o contato
             await enviar_mensagem(resposta.mensagem, audio, contato, message_client, assistente, db)
-        case "T":
+        case "T": # transferir o contato
             if isinstance(message_client, Digisac):
-                digisac_client_db = db.query(DigisacClient).filter_by(digisacSlug=message_client.slug).first()
-                if digisac_client_db is not None:
-                    departamento = db.query(Departamentos).filter_by(atalho=resposta.departamento, id_digisac_client=digisac_client_db.id).first()
-                    if departamento is not None:
-                        await enviar_mensagem(resposta.mensagem, audio, contato, message_client, assistente, db)
-                        message_client.transferir(contactId=contato.contactId, departmentId=departamento.departmentId,
-                                                  userId=departamento.userId, byUserId=None, comments=departamento.comentario)
-        case "E":
-            if isinstance(message_client, Digisac):
-                await enviar_mensagem(resposta.mensagem, audio, contato, message_client, assistente, db)
-                message_client.encerrar_chamado(contactId=contato.contactId, ticketTopicIds=[], comments="", byUserId=None)
-                contato.threadId = None
-                contato.assistenteAtual = None
-                db.commit()
-        case "M":
+                departamento = await obter_departamento(message_client, resposta.departamento, db)
+                if departamento:
+                    await enviar_mensagem(resposta.mensagem, audio, contato, message_client, assistente, db)
+                    await transferir_contato(message_client, contato, departamento)
+        case "E": # encerrar o contato
             await enviar_mensagem(resposta.mensagem, audio, contato, message_client, assistente, db)
-            assistente_db = db.query(Assistente).filter_by(id_empresa=empresa.id, atalho=resposta.assistente).first()
-            if assistente_db is not None:
-                assistente = Assistant(nome=assistente_db.nome, id=assistente_db.assistantId)
-                resposta_assistente = await rodar_criar_thread("", contato, None, assistente, db)
-                contato.assistenteAtual = assistente_db.id
-                db.commit()
-                await enviar_mensagem(resposta_assistente.mensagem, audio, contato, message_client, assistente, db)
-        case "AG":
-            agenda = db.query(Agenda).filter_by(atalho=resposta.agenda, id_empresa=empresa.id).first()
-            mensagem = await verificar_data_sugerida(agenda_client, contato, agenda.endereco, empresa, db)
-            if mensagem is not None:
-                await enviar_mensagem(mensagem, audio, contato, message_client, assistente, db)
-        case "AG-OK":
-            agenda = db.query(Agenda).filter_by(atalho=resposta.agenda, id_empresa=empresa.id).first()
-            mensagem = await cadastrar_evento(agenda_client, contato, agenda.endereco, empresa, db)
-            if mensagem is not None:
-                await enviar_mensagem(mensagem, audio, contato, message_client, assistente, db)
+            await encerrar_contato(contato, message_client, db)
+        case "M": # transferir para outro agente de IA
+            await enviar_mensagem(resposta.mensagem, audio, contato, message_client, assistente, db)
+            assistente, id_assistente_db = await obter_assistente(empresa, None, resposta.assistente, db)
+            resposta_assistente = await rodar_criar_thread("", contato, None, assistente, db)
+            await atualizar_assistente_atual_contato(contato, id_assistente_db, db)
+            await enviar_mensagem(resposta_assistente.mensagem, audio, contato, message_client, assistente, db)
+        case "AG": # checar agenda
+            if agenda_client is not None:
+                agenda = await obter_endereco_agenda(empresa, resposta.agenda, db)
+                if agenda:
+                    mensagem = await verificar_data_sugerida(agenda_client, contato, agenda.endereco, empresa, db)
+                    if mensagem:
+                        await enviar_mensagem(mensagem, audio, contato, message_client, assistente, db)
+        case "AG-OK": # incluir evento na agenda
+            if agenda_client is not None:
+                agenda = await obter_endereco_agenda(empresa, resposta.agenda, db)
+                if agenda:
+                    mensagem = await cadastrar_evento(agenda_client, contato, agenda.endereco, empresa, db)
+                    if mensagem:
+                        await enviar_mensagem(mensagem, audio, contato, message_client, assistente, db)
+        case "AG-RE": # reagendar o evento
+            if agenda_client is not None:
+                dados = await extrair_titulo_agenda_evento(contato.threadId, empresa, db, True)
+                if await agenda_client.reagendar_evento(dados):
+                    await enviar_mensagem(resposta.mensagem, audio, contato, message_client, assistente, db)
+                    await encerrar_contato(contato, message_client, db)
+        case "AG-CN": # cancelar o evento
+            if agenda_client is not None:
+                dados = await extrair_titulo_agenda_evento(contato.threadId, empresa, db)
+                if await agenda_client.cancelar_evento(dados, empresa.tipo_cancelamento_evento):
+                    await enviar_mensagem(resposta.mensagem, audio, contato, message_client, assistente, db)
+                    await encerrar_contato(contato, message_client, db)
+        case "AG-CF": # confirmar o evento
+            if agenda_client is not None:
+                dados = await extrair_titulo_agenda_evento(contato.threadId, empresa, db)
+                if await agenda_client.confirmar_evento(dados):
+                    await enviar_mensagem(resposta.mensagem, audio, contato, message_client, assistente, db)
+                    await encerrar_contato(contato, message_client, db)
