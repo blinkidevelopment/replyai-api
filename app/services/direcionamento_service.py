@@ -5,7 +5,7 @@ from app.services.agendamento_service import verificar_data_sugerida, cadastrar_
 from app.services.contato_service import encerrar_contato, atualizar_assistente_atual_contato, transferir_contato
 from app.services.empresa_service import obter_assistente, obter_endereco_agenda, obter_departamento
 from app.services.mensagem_service import enviar_mensagem
-from app.services.thread_service import rodar_criar_thread
+from app.services.thread_service import executar_thread
 from app.utils.agenda_client import AgendaClient
 from app.utils.assistant import Resposta, Assistant
 from app.utils.digisac import Digisac
@@ -37,7 +37,7 @@ async def direcionar(
         case "M": # transferir para outro agente de IA
             await enviar_mensagem(resposta.mensagem, audio, contato, message_client, assistente, db)
             assistente, id_assistente_db = await obter_assistente(empresa, None, resposta.assistente, db)
-            resposta_assistente = await rodar_criar_thread("", contato, None, assistente, db)
+            resposta_assistente = await executar_thread("", contato, None, assistente, db)
             await atualizar_assistente_atual_contato(contato, id_assistente_db, db)
             await enviar_mensagem(resposta_assistente.mensagem, audio, contato, message_client, assistente, db)
         case "AG": # checar agenda

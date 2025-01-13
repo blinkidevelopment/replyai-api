@@ -8,7 +8,7 @@ from msgraph.generated.users.item.calendar.events.item.calendar.calendar_request
 from msgraph.generated.models.event import Event
 from msgraph.generated.models.date_time_time_zone import DateTimeTimeZone
 
-from app.utils.agenda_client import AgendaClient
+from app.utils.agenda_client import AgendaClient, Schedule
 from app.utils.assistant import RespostaTituloAgenda, RespostaTituloAgendaDataNova
 
 
@@ -28,7 +28,7 @@ class Outlook(AgendaClient):
         self.hora_final_agenda = horaFinalAgenda
         self.timezone = timeZone
 
-    async def obter_horarios(self, agendas: [str], data: str, usuario: str):
+    async def obter_horarios(self, agendas: [str], data: str):
         try:
             request_config = RequestConfiguration()
 
@@ -40,11 +40,11 @@ class Outlook(AgendaClient):
             request_body.end_time = DateTimeTimeZone(date_time=f"{data}T{self.hora_final_agenda}", time_zone=self.timezone)
             request_body.availability_view_interval = self.duracao_evento
 
-            response = await self.graph_client.users.by_user_id(usuario).calendar.get_schedule.post(request_configuration=request_config, body=request_body)
+            response = await self.graph_client.users.by_user_id(self.usuario_padrao).calendar.get_schedule.post(request_configuration=request_config, body=request_body)
 
-            return [RespostaSchedule.from_object(item) for item in response.value]
+            return [Schedule.from_object(item) for item in response.value]
         except Exception as e:
-            print(str(e))
+            print(e)
     
     async def cadastrar_evento(self, agenda: str, data: str, titulo: str):
         try:
@@ -57,7 +57,7 @@ class Outlook(AgendaClient):
             await self.graph_client.users.by_user_id(agenda).events.post(body=request_body)
             return True
         except Exception as e:
-            print(str(e))
+            print(e)
             return False
 
     async def confirmar_evento(self, dados: RespostaTituloAgenda):
@@ -78,7 +78,7 @@ class Outlook(AgendaClient):
                 await self.graph_client.users.by_user_id(dados.endereco_agenda).events.by_event_id(id).patch(body=request_body)
                 return True
         except Exception as e:
-            print(str(e))
+            print(e)
         return False
 
     async def reagendar_evento(self, dados: RespostaTituloAgendaDataNova):
@@ -103,7 +103,7 @@ class Outlook(AgendaClient):
                 await self.graph_client.users.by_user_id(dados.endereco_agenda).events.by_event_id(id).patch(body=request_body)
                 return True
         except Exception as e:
-            print(str(e))
+            print(e)
         return False
 
     async def cancelar_evento(self, dados: RespostaTituloAgenda, tipo_cancelamento: str):
@@ -126,41 +126,7 @@ class Outlook(AgendaClient):
                     request_body.subject = f"CANCELADO - {dados.titulo}"
                     request_body.show_as = FreeBusyStatus("free")
                     await self.graph_client.users.by_user_id(dados.endereco_agenda).events.by_event_id(id).patch(body=request_body)
-
                 return True
         except Exception as e:
-            print(str(e))
+            print(e)
         return False
-
-
-class RespostaSchedule:
-    def __init__(self, availability_view: str, schedule_id: str, schedule_items: list):
-        self.availability_view = availability_view
-        self.schedule_id = schedule_id
-        self.schedule_items = schedule_items
-
-    @classmethod
-    def from_object(cls, data: object):
-        schedule_items = [
-            {
-                "start": {
-                    "date_time": item.start.date_time,
-                    "time_zone": item.start.time_zone
-                },
-                "end": {
-                    "date_time": item.end.date_time,
-                    "time_zone": item.end.time_zone
-                },
-                "location": item.location,
-                "is_private": item.is_private,
-                "status": item.status,
-                "subject": item.subject
-            }
-            for item in data.schedule_items
-        ]
-
-        return cls(
-            availability_view=data.availability_view,
-            schedule_id=data.schedule_id,
-            schedule_items=schedule_items
-        )

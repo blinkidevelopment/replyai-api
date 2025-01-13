@@ -7,7 +7,7 @@ from app.utils.assistant import Assistant, Resposta
 from app.utils.message_client import DadosContato
 
 
-async def rodar_criar_thread(
+async def executar_thread(
         mensagem: str,
         contato: Contato,
         dados_contato: DadosContato | None,

@@ -7,7 +7,7 @@ from app.schemas.evolutionapi_schema import EvolutionAPIRequest
 from app.services.contato_service import obter_criar_contato
 from app.services.direcionamento_service import direcionar
 from app.services.empresa_service import obter_empresa
-from app.services.thread_service import rodar_criar_thread
+from app.services.thread_service import executar_thread
 from app.services.mensagem_service import obter_mensagem_audio, enviar_mensagem
 from app.db.database import obter_sessao
 from app.utils.evolutionapi import EvolutionAPI
@@ -42,7 +42,7 @@ async def responder(
                 dados_contato = message_client.obter_dados_contato(request)
             else:
                 dados_contato = None
-            resposta = await rodar_criar_thread(mensagem, contato, dados_contato, assistente, db)
+            resposta = await executar_thread(mensagem, contato, dados_contato, assistente, db)
             await direcionar(resposta, audio, message_client, agenda_client, empresa, contato, assistente, db)
             resultado = True
         db.close()

@@ -3,10 +3,12 @@ import pytz
 import json
 from sqlalchemy.orm import Session
 
-from app.db.models import Contato, Assistente, Empresa
+from app.db.models import Contato, Assistente, Empresa, OutlookClient, GoogleCalendarClient
 from app.utils.agenda_client import AgendaClient
 from app.utils.assistant import Assistant, Instrucao, DadosData, DadosAgenda, DadosEvento, DadosEventoFechado, \
     RespostaDataSugerida, RespostaAgendamento, RespostaConfirmacao, RespostaTituloAgenda, RespostaTituloAgendaDataNova
+from app.utils.google_calendar import GoogleCalendar
+from app.utils.outlook import Outlook
 
 
 async def verificar_data_sugerida(
@@ -44,7 +46,7 @@ async def verificar_data_sugerida(
         resposta = RespostaDataSugerida.from_dict(json.loads(resposta))
 
         if resposta.tag == "DATA VÁLIDA":
-            agendas = await agenda_client.obter_horarios(agendas=[endereco_agenda], data=resposta.data_sugerida, usuario=agenda_client.usuario_padrao)
+            agendas = await agenda_client.obter_horarios(agendas=[endereco_agenda], data=resposta.data_sugerida)
             if agendas:
                 agenda_disponivel = agendas[0]
                 if agenda_disponivel is not None:
@@ -141,7 +143,7 @@ async def extrair_dados_evento(
             resposta_obj = RespostaConfirmacao.from_dict(json.loads(resposta))
             return resposta_obj, thread_id
     except Exception as e:
-        print(str(e))
+        print(e)
     return {}, None
 
 
@@ -169,3 +171,35 @@ async def extrair_titulo_agenda_evento(
             resposta_obj = RespostaTituloAgenda.from_dict(json.loads(resposta))
         return resposta_obj
     return None
+
+
+def criar_agenda_client(empresa: Empresa, db: Session):
+    if empresa.agenda_client_type == "outlook":
+        outlook_client_db = db.query(OutlookClient).filter_by(id_empresa=empresa.id).first()
+        if outlook_client_db:
+            return Outlook(
+                clientId=outlook_client_db.clientId,
+                tenantId=outlook_client_db.tenantId,
+                clientSecret=outlook_client_db.clientSecret,
+                duracaoEvento=outlook_client_db.duracaoEvento,
+                usuarioPadrao=outlook_client_db.usuarioPadrao,
+                horaInicioAgenda=outlook_client_db.horaInicioAgenda,
+                horaFinalAgenda=outlook_client_db.horaFinalAgenda,
+                timeZone=outlook_client_db.timeZone
+            )
+    elif empresa.agenda_client_type == "google_calendar":
+        googlecalendar_client_db = db.query(GoogleCalendarClient).filter_by(id_empresa=empresa.id).first()
+        if googlecalendar_client_db:
+            return GoogleCalendar(
+                project_id=googlecalendar_client_db.project_id,
+                private_key_id=googlecalendar_client_db.private_key_id,
+                private_key=googlecalendar_client_db.private_key,
+                client_email=googlecalendar_client_db.client_email,
+                client_id=googlecalendar_client_db.client_id,
+                client_x509_cert_url=googlecalendar_client_db.client_x509_cert_url,
+                api_key=googlecalendar_client_db.api_key,
+                hora_inicio_agenda=googlecalendar_client_db.hora_inicio_agenda,
+                hora_final_agenda=googlecalendar_client_db.hora_final_agenda,
+                timezone=googlecalendar_client_db.timezone,
+                duracao_evento=googlecalendar_client_db.duracao_evento
+            )

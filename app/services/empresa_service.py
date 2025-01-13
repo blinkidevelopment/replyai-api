@@ -1,10 +1,10 @@
 from sqlalchemy.orm import Session
 
-from app.db.models import Empresa, OutlookClient, Assistente, Agenda, DigisacClient, Departamento
+from app.db.models import Empresa, Assistente, Agenda, DigisacClient, Departamento
+from app.services.agendamento_service import criar_agenda_client
 from app.services.mensagem_service import criar_message_client
 from app.utils.assistant import Assistant
 from app.utils.digisac import Digisac
-from app.utils.outlook import Outlook
 
 
 async def obter_empresa(slug: str, token: str, db: Session):
@@ -12,27 +12,8 @@ async def obter_empresa(slug: str, token: str, db: Session):
 
     if empresa is not None:
         message_client = criar_message_client(empresa, db)
-
-        agenda_client_db = db.query(OutlookClient).filter_by(id_empresa=empresa.id).first()
-        agenda_client = Outlook(clientId=agenda_client_db.clientId, tenantId=agenda_client_db.tenantId, clientSecret=agenda_client_db.clientSecret,
-                                duracaoEvento=agenda_client_db.duracaoEvento, usuarioPadrao=agenda_client_db.usuarioPadrao, horaInicioAgenda=agenda_client_db.horaInicioAgenda,
-                                horaFinalAgenda=agenda_client_db.horaFinalAgenda, timeZone=agenda_client_db.timeZone)
-
+        agenda_client = criar_agenda_client(empresa, db)
         return empresa, message_client, agenda_client
-    return None
-
-
-async def obter_agenda_client(empresa: Empresa, db: Session):
-    if empresa is not None:
-        agenda_client_db = db.query(OutlookClient).filter_by(id_empresa=empresa.id).first()
-        agenda_client = Outlook(clientId=agenda_client_db.clientId, tenantId=agenda_client_db.tenantId,
-                                clientSecret=agenda_client_db.clientSecret,
-                                duracaoEvento=agenda_client_db.duracaoEvento,
-                                usuarioPadrao=agenda_client_db.usuarioPadrao,
-                                horaInicioAgenda=agenda_client_db.horaInicioAgenda,
-                                horaFinalAgenda=agenda_client_db.horaFinalAgenda, timeZone=agenda_client_db.timeZone)
-
-        return agenda_client
     return None
 
 

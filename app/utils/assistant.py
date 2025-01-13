@@ -168,6 +168,16 @@ class Assistant:
 
             try:
                 if thread_id:
+                    runs = self.client.beta.threads.runs.list(
+                        thread_id=thread_id,
+                        limit=1,
+                        order="desc"
+                    )
+
+                    if runs.data[0].status in ["queued", "in_progress", "cancelling"]:
+                        time.sleep(15)
+                        continue
+
                     run = self.client.beta.threads.runs.create(
                         assistant_id=self.id,
                         thread_id=thread_id

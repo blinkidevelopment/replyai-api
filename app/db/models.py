@@ -53,6 +53,7 @@ class Empresa(Base):
     token = Column(String, unique=True, nullable=False)
     fuso_horario = Column(String)
     message_client_type = Column(String)
+    agenda_client_type = Column(String)
     recall_timeout_minutes = Column(Integer)
     final_recall_timeout_minutes = Column(Integer)
     recall_quant = Column(Integer)
@@ -128,3 +129,23 @@ class OutlookClient(Base):
     id_empresa = Column(Integer, ForeignKey("empresas.id"))
 
     empresa = relationship("Empresa", backref="outlook_client")
+
+
+class GoogleCalendarClient(Base):
+    __tablename__ = "googlecalendar_clients"
+
+    id = Column(Integer, primary_key=True, index=True)
+    project_id = Column(String)
+    private_key_id = Column(String)
+    private_key = Column(String)
+    client_email = Column(String)
+    client_id = Column(String)
+    client_x509_cert_url = Column(String)
+    api_key = Column(String)
+    duracao_evento = Column(Integer)
+    hora_inicio_agenda = Column(String)
+    hora_final_agenda = Column(String)
+    timezone = Column(String)
+    id_empresa = Column(Integer, ForeignKey("empresas.id"))
+
+    empresa = relationship("Empresa", backref="googlecalendar_client")

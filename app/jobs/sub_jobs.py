@@ -1,13 +1,13 @@
 from sqlalchemy.orm import Session
 
 from app.db.models import Contato, Empresa, Agenda
-from app.services.agendamento_service import extrair_dados_evento
+from app.services.agendamento_service import extrair_dados_evento, criar_agenda_client
 from app.services.contato_service import redefinir_contato, obter_criar_contato, atualizar_thread_contato, \
     atualizar_assistente_atual_contato
 from app.services.direcionamento_service import direcionar
-from app.services.empresa_service import obter_agenda_client, obter_assistente
+from app.services.empresa_service import obter_assistente
 from app.services.mensagem_service import criar_message_client
-from app.services.thread_service import rodar_criar_thread
+from app.services.thread_service import executar_thread
 from app.utils.digisac import Digisac
 
 
@@ -32,18 +32,18 @@ async def enviar_retomada_conversa(contato: Contato, empresa: Empresa, db: Sessi
             if origem_mensagem is None or origem_mensagem == "user":
                 await redefinir_contato(contato, db)
                 return
-    resposta = await rodar_criar_thread(acao, contato, None, assistente, db)
+    resposta = await executar_thread(acao, contato, None, assistente, db)
     await direcionar(resposta, False, message_client, None, empresa, contato, assistente, db)
     contato.recallCount += 1
     db.commit()
 
 
 async def enviar_confirmacao_consulta(data: str, data_atual: str, empresa: Empresa, db: Session):
-    agenda_client = await obter_agenda_client(empresa, db)
+    agenda_client = criar_agenda_client(empresa, db)
     agendas = db.query(Agenda).filter_by(id_empresa=empresa.id).all()
 
     message_client = criar_message_client(empresa, db)
-    respostas = await agenda_client.obter_horarios(agendas=[agenda.endereco for agenda in agendas], data=data, usuario=agenda_client.usuario_padrao)
+    respostas = await agenda_client.obter_horarios(agendas=[agenda.endereco for agenda in agendas], data=data)
 
     for resposta in respostas:
         for evento in resposta.schedule_items:
