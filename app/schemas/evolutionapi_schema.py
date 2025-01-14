@@ -20,6 +20,9 @@ class MessageContextInfo(BaseModel):
     deviceListMetadataVersion: int
     messageSecret: str
 
+class ExtendedTextMessage(BaseModel):
+    text: str
+
 class ImageMessage(BaseModel):
     url: str
     mimetype: str
@@ -56,6 +59,7 @@ class AudioMessage(BaseModel):
 class Message(BaseModel):
     conversation: Optional[str] = None
     messageContextInfo: Optional[MessageContextInfo] = None
+    extendedTextMessage: Optional[ExtendedTextMessage] = None
     imageMessage: Optional[ImageMessage] = None
     audioMessage: Optional[AudioMessage] = None
     base64: Optional[str] = None

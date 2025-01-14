@@ -62,7 +62,10 @@ async def obter_mensagem_audio(request: DigisacRequest | EvolutionAPIRequest, me
         if request.data.message.audioMessage is not None:
             audio = True
         else:
-            mensagem = request.data.message.conversation or ""
+            if request.data.message.extendedTextMessage:
+                mensagem = request.data.message.extendedTextMessage.text
+            else:
+                mensagem = request.data.message.conversation or ""
 
     if audio:
         arquivo = message_client.obter_arquivo(request=request)
