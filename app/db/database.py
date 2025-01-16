@@ -1,3 +1,5 @@
+from contextlib import contextmanager
+
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -18,10 +20,12 @@ def obter_sessao():
         db.close()
 
 
+@contextmanager
 def retornar_sessao():
     db = SessionLocal()
     try:
-        return db
+        yield db
     except Exception as e:
         print(f"Erro ao criar a sessão: {e}")
+    finally:
         db.close()

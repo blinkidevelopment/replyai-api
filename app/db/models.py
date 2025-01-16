@@ -13,6 +13,8 @@ class Contato(Base):
     lastMessage = Column(DateTime)
     recallCount = Column(Integer)
     appointmentConfirmation = Column(Boolean)
+    deal_id = Column(String, default=None)
+    receber_respostas_ia = Column(Boolean, default=True)
     id_empresa = Column(Integer, ForeignKey("empresas.id"))
 
     empresa = relationship("Empresa", backref="contatos")
@@ -54,6 +56,7 @@ class Empresa(Base):
     fuso_horario = Column(String)
     message_client_type = Column(String)
     agenda_client_type = Column(String)
+    crm_client_type = Column(String)
     recall_timeout_minutes = Column(Integer)
     final_recall_timeout_minutes = Column(Integer)
     recall_quant = Column(Integer)
@@ -149,3 +152,27 @@ class GoogleCalendarClient(Base):
     id_empresa = Column(Integer, ForeignKey("empresas.id"))
 
     empresa = relationship("Empresa", backref="googlecalendar_client")
+
+
+class RDStationCRMClient(Base):
+    __tablename__ = "rdstationcrm_clients"
+
+    id = Column(Integer, primary_key=True, index=True)
+    token = Column(String)
+    id_fonte_padrao = Column(String)
+    id_empresa = Column(Integer, ForeignKey("empresas.id"))
+
+    empresa = relationship("Empresa", backref="rdstationcrm_client")
+
+
+class RDStationCRMDealStage(Base):
+    __tablename__ = "rdstationcrm_deal_stages"
+
+    id = Column(Integer, primary_key=True, index=True)
+    atalho = Column(String)
+    deal_stage_id = Column(String)
+    user_id = Column(String)
+    deal_stage_inicial = Column(Boolean)
+    id_rdstationcrm_client = Column(Integer, ForeignKey("rdstationcrm_clients.id"))
+
+    rdstationcrm_client = relationship("RDStationCRMClient", backref="estagios")

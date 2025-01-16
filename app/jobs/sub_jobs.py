@@ -33,7 +33,7 @@ async def enviar_retomada_conversa(contato: Contato, empresa: Empresa, db: Sessi
                 await redefinir_contato(contato, db)
                 return
     resposta = await executar_thread(acao, contato, None, assistente, db)
-    await direcionar(resposta, False, message_client, None, empresa, contato, assistente, db)
+    await direcionar(resposta, False, message_client, None, None, empresa, contato, assistente, db)
     contato.recallCount += 1
     db.commit()
 
@@ -51,10 +51,10 @@ async def enviar_confirmacao_consulta(data: str, data_atual: str, empresa: Empre
             if resposta_extracao:
                 if resposta_extracao.telefone:
                     id_contato = message_client.obter_id_contato(resposta_extracao.telefone, resposta_extracao.cliente)
-                    contato, _ = await obter_criar_contato(None, id_contato, empresa, db)
+                    contato = (await obter_criar_contato(None, id_contato, empresa, message_client, None, db))[0]
                     assistente, assistente_db_id = await obter_assistente(empresa, "confirmar", None, db)
                     if not contato.appointmentConfirmation:
                         contato.appointmentConfirmation = True
                         await atualizar_assistente_atual_contato(contato, assistente_db_id, db)
-                    await direcionar(resposta_extracao.resposta_confirmacao, False, message_client, None, empresa, contato, assistente, db)
+                    await direcionar(resposta_extracao.resposta_confirmacao, False, message_client, None, None, empresa, contato, assistente, db)
                     await atualizar_thread_contato(contato, thread_id, db)

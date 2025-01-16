@@ -3,11 +3,13 @@ from sqlalchemy.orm import Session
 from app.db.models import Contato, Empresa
 from app.services.agendamento_service import verificar_data_sugerida, cadastrar_evento, extrair_titulo_agenda_evento
 from app.services.contato_service import encerrar_contato, atualizar_assistente_atual_contato, transferir_contato
+from app.services.crm_service import mover_lead
 from app.services.empresa_service import obter_assistente, obter_endereco_agenda, obter_departamento
 from app.services.mensagem_service import enviar_mensagem
 from app.services.thread_service import executar_thread
 from app.utils.agenda_client import AgendaClient
 from app.utils.assistant import Resposta, Assistant
+from app.utils.crm_client import CRMClient
 from app.utils.digisac import Digisac
 from app.utils.message_client import MessageClient
 
@@ -17,6 +19,7 @@ async def direcionar(
         audio: bool,
         message_client: MessageClient,
         agenda_client: AgendaClient | None,
+        crm_client: CRMClient | None,
         empresa: Empresa,
         contato: Contato,
         assistente: Assistant,
@@ -52,23 +55,27 @@ async def direcionar(
                 agenda = await obter_endereco_agenda(empresa, resposta.agenda, db)
                 if agenda:
                     mensagem = await cadastrar_evento(agenda_client, contato, agenda.endereco, empresa, db)
+                    await mover_lead(crm_client, contato, empresa, resposta.atividade, db)
                     if mensagem:
                         await enviar_mensagem(mensagem, audio, contato, message_client, assistente, db)
         case "AG-RE": # reagendar o evento
             if agenda_client is not None:
                 dados = await extrair_titulo_agenda_evento(contato.threadId, empresa, db, True)
                 if await agenda_client.reagendar_evento(dados):
+                    await mover_lead(crm_client, contato, empresa, resposta.atividade, db)
                     await enviar_mensagem(resposta.mensagem, audio, contato, message_client, assistente, db)
                     await encerrar_contato(contato, message_client, db)
         case "AG-CN": # cancelar o evento
             if agenda_client is not None:
                 dados = await extrair_titulo_agenda_evento(contato.threadId, empresa, db)
                 if await agenda_client.cancelar_evento(dados, empresa.tipo_cancelamento_evento):
+                    await mover_lead(crm_client, contato, empresa, resposta.atividade, db)
                     await enviar_mensagem(resposta.mensagem, audio, contato, message_client, assistente, db)
                     await encerrar_contato(contato, message_client, db)
         case "AG-CF": # confirmar o evento
             if agenda_client is not None:
                 dados = await extrair_titulo_agenda_evento(contato.threadId, empresa, db)
                 if await agenda_client.confirmar_evento(dados):
+                    await mover_lead(crm_client, contato, empresa, resposta.atividade, db)
                     await enviar_mensagem(resposta.mensagem, audio, contato, message_client, assistente, db)
                     await encerrar_contato(contato, message_client, db)
