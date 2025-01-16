@@ -1,9 +1,4 @@
-import os
 from datetime import datetime, timedelta
-
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from apscheduler.triggers.cron import CronTrigger
-from apscheduler.triggers.interval import IntervalTrigger
 from sqlalchemy import or_, and_
 
 from app.db.database import retornar_sessao
@@ -59,20 +54,3 @@ async def confirmar_agendamento():
                 await enviar_confirmacao_consulta(dia_seguinte.strftime("%Y-%m-%d"), data_atual.strftime("%Y-%m-%dT%H:%M:%S"), empresa, db)
         except Exception as e:
             print(f"Erro ao processar: {e}")
-
-
-scheduler = AsyncIOScheduler()
-
-scheduler.add_job(
-    retomar_conversa,
-    trigger=IntervalTrigger(minutes=int(os.getenv("RECALL_JOB_MINUTE_INTERVAL", 30))),
-    id="retomar_conversa_job"
-)
-
-scheduler.add_job(
-    confirmar_agendamento,
-    trigger=CronTrigger(
-        hour=os.getenv("CONFIRMATION_JOB_HOUR_INTERVAL", 12),
-        minute=os.getenv("CONFIRMATION_JOB_MINUTE_INTERVAL", 0)),
-    id="confirmar_agendamento_job"
-)

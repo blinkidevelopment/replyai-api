@@ -11,7 +11,7 @@ from app.services.thread_service import executar_thread
 from app.services.mensagem_service import obter_mensagem_audio, enviar_mensagem
 from app.db.database import obter_sessao
 from app.utils.evolutionapi import EvolutionAPI
-from app.utils.rdstation_crm import RDStationCRM
+
 
 router = APIRouter()
 

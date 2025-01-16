@@ -37,7 +37,9 @@ async def enviar_retomada_conversa(contato: Contato, empresa: Empresa, db: Sessi
                 return
     resposta = await executar_thread(acao, contato, None, assistente, db)
     await direcionar(resposta, False, message_client, None, None, empresa, contato, assistente, db)
-    contato.recallCount += 1
+
+    if resposta.atividade != "E":
+        contato.recallCount += 1
     db.commit()
     return
 
