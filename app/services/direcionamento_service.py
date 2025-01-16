@@ -40,9 +40,10 @@ async def direcionar(
         case "M": # transferir para outro agente de IA
             await enviar_mensagem(resposta.mensagem, audio, contato, message_client, assistente, db)
             assistente, id_assistente_db = await obter_assistente(empresa, None, resposta.assistente, db)
-            resposta_assistente = await executar_thread("", contato, None, assistente, db)
-            await atualizar_assistente_atual_contato(contato, id_assistente_db, db)
-            await enviar_mensagem(resposta_assistente.mensagem, audio, contato, message_client, assistente, db)
+            if assistente:
+                resposta_assistente = await executar_thread("", contato, None, assistente, db)
+                await atualizar_assistente_atual_contato(contato, id_assistente_db, db)
+                await enviar_mensagem(resposta_assistente.mensagem, audio, contato, message_client, assistente, db)
         case "AG": # checar agenda
             if agenda_client is not None:
                 agenda = await obter_endereco_agenda(empresa, resposta.agenda, db)

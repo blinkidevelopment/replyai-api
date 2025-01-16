@@ -35,7 +35,7 @@ async def obter_assistente(empresa: Empresa, proposito: str | None, atalho: str 
         if assistente_db:
             assistente = Assistant(nome=assistente_db.nome, id=assistente_db.assistantId)
             return assistente, assistente_db.id
-    return None
+    return None, None
 
 
 async def obter_departamento(message_client: Digisac, atalho: str, db: Session):
