@@ -57,17 +57,3 @@ async def responder(
                 await enviar_mensagem(empresa.mensagem_erro_ia, False, contato, message_client, assistente, db)
             pass
         return {"erro": str(e)}
-
-
-@router.post("/rdstation")
-async def rdstation_teste():
-    crm = RDStationCRM(token="6787ad97b0cd20001b1e61c0",
-        user_id="6787a88632a2b50014fcba29",
-        deal_stage_id="6787a8af5e6d630018eaef3d",
-        deal_source_id="6787a8af5e6d630018eaef30")
-
-    return crm.criar_lead(
-        nome_negociacao="Teste Escritório",
-        nome_contato="Escritório",
-        telefone_contato="5519991030412"
-    )
