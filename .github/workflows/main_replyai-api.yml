@@ -5,6 +5,9 @@
 name: Build and deploy Python app to Azure Web App - replyai-api
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
@@ -62,9 +65,9 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_733F04E435C34385B289FD6AA31F9E98 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_7084BD860A6E4C1B87C2AC8C6FB21445 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_ECB0D9232742422BBCC62526F2E7B721 }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_DA2E2E8756C24104A3B600D4FCA5748A }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_E32C83A69D984E799F12D51CF31269CD }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_7DB92012B1CA4CC3A305FA50897F0A16 }}
 
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3
