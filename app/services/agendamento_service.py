@@ -5,8 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.db.models import Contato, Assistente, Empresa, OutlookClient, GoogleCalendarClient
 from app.utils.agenda_client import AgendaClient
-from app.utils.assistant import Assistant, Instrucao, DadosData, DadosAgenda, DadosEvento, DadosEventoFechado, \
-    RespostaDataSugerida, RespostaAgendamento, RespostaConfirmacao, RespostaTituloAgenda, RespostaTituloAgendaDataNova
+from app.utils.assistant import Assistant, Instrucao, RespostaDataSugerida, RespostaAgendamento, RespostaConfirmacao, RespostaTituloAgenda, RespostaTituloAgendaDataNova
 from app.utils.google_calendar import GoogleCalendar
 from app.utils.outlook import Outlook
 
@@ -28,12 +27,12 @@ async def verificar_data_sugerida(
 
     instrucao = Instrucao(
         acao="verificar_data_sugerida",
-        dados=DadosData(
-            hoje=hoje_formatado,
-            sugestao_inicial=amanha_formatado,
-            numero_semana=numero_semana,
-            semana_par_impar=semana_par_impar
-        )
+        dados={
+            "hoje": hoje_formatado,
+            "sugestao_inicial": amanha_formatado,
+            "numero_semana": numero_semana,
+            "semana_par_impar": semana_par_impar
+        }
     )
 
     assistente_db = db.query(Assistente).filter_by(proposito="agendar", id_empresa=empresa.id).first()
@@ -51,19 +50,19 @@ async def verificar_data_sugerida(
                 agenda_disponivel = agendas[0]
                 if agenda_disponivel is not None:
                     if set(agenda_disponivel.availability_view) == {"2"}:
-                        dados_agenda = DadosEventoFechado(
-                            titulo=agenda_disponivel.schedule_items[0]["subject"],
-                            disponibilidade=agenda_disponivel.availability_view
-                        )
+                        dados_agenda = {
+                            "titulo": agenda_disponivel.schedule_items[0]["subject"] or "",
+                            "disponibilidade": agenda_disponivel.availability_view or ""
+                        }
                         instrucao.acao = "agenda_fechada"
                     else:
-                        dados_agenda = DadosAgenda(
-                            data_sugerida=resposta.data_sugerida,
-                            disponibilidade=agenda_disponivel.availability_view,
-                            horario_inicial=agenda_client.hora_inicio_agenda,
-                            horario_final=agenda_client.hora_final_agenda,
-                            intervalo_tempo=agenda_client.duracao_evento
-                        )
+                        dados_agenda = {
+                            "data_sugerida": resposta.data_sugerida,
+                            "disponibilidade": agenda_disponivel.availability_view,
+                            "horario_inicial": agenda_client.hora_inicio_agenda,
+                            "horario_final": agenda_client.hora_final_agenda,
+                            "intervalo_tempo": agenda_client.duracao_evento
+                        }
                         instrucao.acao = "agenda_disponivel"
                     instrucao.dados = dados_agenda
                     assistente.adicionar_mensagens(mensagens=[instrucao.__str__()], id_arquivos=[], thread_id=contato.threadId)
@@ -89,12 +88,9 @@ async def cadastrar_evento(
 
     instrucao = Instrucao(
         acao="extrair_data_hora_escolhida",
-        dados=DadosData(
-            hoje=hoje_formatado,
-            sugestao_inicial="",
-            numero_semana="",
-            semana_par_impar=""
-        )
+        dados={
+            "hoje": hoje_formatado
+        }
     )
 
     assistente_db = db.query(Assistente).filter_by(proposito="agendar", id_empresa=empresa.id).first()
@@ -123,14 +119,14 @@ async def extrair_dados_evento(
 ):
     instrucao = Instrucao(
         acao="extrair_dados_evento",
-        dados=DadosEvento(
-            email_agenda=agenda,
-            titulo=evento.get("subject", ""),
-            local=evento.get("location", ""),
-            data_hora_inicio=evento.get("start").get("date_time"),
-            data_hora_fim=evento.get("end").get("date_time"),
-            data_hora_atual=data_atual
-        )
+        dados={
+            "email_agenda": agenda,
+            "titulo": evento.get("subject", ""),
+            "local": evento.get("location", ""),
+            "data_hora_inicio": evento.get("start").get("date_time"),
+            "data_hora_fim": evento.get("end").get("date_time"),
+            "data_hora_atual": data_atual
+        }
     )
 
     assistente_db = db.query(Assistente).filter_by(proposito="agendar", id_empresa=empresa.id).first()

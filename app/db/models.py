@@ -57,11 +57,14 @@ class Empresa(Base):
     message_client_type = Column(String)
     agenda_client_type = Column(String)
     crm_client_type = Column(String)
+    financial_client_type = Column(String)
     recall_timeout_minutes = Column(Integer)
     final_recall_timeout_minutes = Column(Integer)
     recall_quant = Column(Integer)
     recall_ativo = Column(Boolean)
     confirmar_agendamentos_ativo = Column(Boolean)
+    lembrar_vencimentos_ativo = Column(Boolean)
+    cobrar_inadimplentes_ativo = Column(Boolean)
     tipo_cancelamento_evento = Column(String)
     mensagem_erro_ia = Column(String)
     assistentePadrao = Column(Integer, ForeignKey("assistentes.id"))
@@ -176,3 +179,13 @@ class RDStationCRMDealStage(Base):
     id_rdstationcrm_client = Column(Integer, ForeignKey("rdstationcrm_clients.id"))
 
     rdstationcrm_client = relationship("RDStationCRMClient", backref="estagios")
+
+
+class AsaasClient(Base):
+    __tablename__ = "asaas_clients"
+
+    id = Column(Integer, primary_key=True, index=True)
+    token = Column(String)
+    id_empresa = Column(Integer, ForeignKey("empresas.id"))
+
+    empresa = relationship("Empresa", backref="asaas_client")

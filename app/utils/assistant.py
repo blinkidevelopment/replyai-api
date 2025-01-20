@@ -339,87 +339,35 @@ class RespostaTituloAgendaDataNova:
         )
 
 
-class DadosData:
-    def __init__(self, hoje: str, sugestao_inicial: str, numero_semana: str, semana_par_impar: str):
-        self.hoje = hoje
-        self.sugestao_inicial = sugestao_inicial
-        self.numero_semana = numero_semana
-        self.semana_par_impar = semana_par_impar
+class RespostaFinanceiro:
+    def __init__(self, telefone: str, resposta: Resposta):
+        self.telefone = telefone
+        self.resposta = resposta
 
-    def to_dict(self):
-        return {
-            "hoje": self.hoje,
-            "sugestao_inicial": self.sugestao_inicial,
-            "numero_semana": self.numero_semana,
-            "semana_par_impar": self.semana_par_impar,
-        }
-
-
-class DadosAgenda:
-    def __init__(self, data_sugerida: str, disponibilidade: str, horario_inicial: str, horario_final: str, intervalo_tempo: int):
-        self.data_sugerida = data_sugerida
-        self.disponibilidade = disponibilidade
-        self.horario_inicial = horario_inicial
-        self.horario_final = horario_final
-        self.intervalo_tempo = intervalo_tempo
-
-    def to_dict(self):
-        return {
-            "data_sugerida": self.data_sugerida,
-            "disponibilidade": self.disponibilidade,
-            "horario_inicial": self.horario_inicial,
-            "horario_final": self.horario_final,
-            "intervalo_tempo": self.intervalo_tempo,
-        }
-
-
-class DadosEvento:
-    def __init__(self, email_agenda: str, titulo: str, local: str, data_hora_inicio: str, data_hora_fim: str, data_hora_atual: str):
-        self.email_agenda = email_agenda
-        self.titulo = titulo
-        self.local = local
-        self.data_hora_inicio = data_hora_inicio
-        self.data_hora_fim = data_hora_fim
-        self.data_hora_atual = data_hora_atual
-
-    def to_dict(self):
-        return {
-            "email_agenda": self.email_agenda,
-            "titulo": self.titulo,
-            "local": self.local,
-            "data_hora_inicio": self.data_hora_inicio,
-            "data_hora_fim": self.data_hora_fim,
-            "data_hora_atual": self.data_hora_atual
-        }
-
-
-class DadosEventoFechado:
-    def __init__(self, titulo: str, disponibilidade: str):
-        self.titulo_evento = titulo
-        self.disponibilidade = disponibilidade
-
-    def to_dict(self):
-        return {
-            "disponibilidade": self.disponibilidade,
-            "titulo_evento": self.titulo_evento
-        }
+    @classmethod
+    def from_dict(cls, data: dict):
+        return cls(
+            telefone=data["telefone"],
+            resposta=Resposta.from_dict(data["resposta"])
+        )
 
 
 class Instrucao:
-    def __init__(self, acao: str, dados: DadosData | DadosAgenda | DadosEvento | DadosEventoFechado | None):
+    def __init__(self, acao: str, dados: dict | None):
         self.acao = acao
         self.dados = dados
 
     def to_dict(self):
         obj = {"acao": self.acao}
         if self.dados is not None:
-            obj["dados"] = self.dados.to_dict()
+            obj["dados"] = self.dados
 
         return obj
 
     def __str__(self):
         import json
         return json.dumps(self.to_dict(), indent=2)
+
 
 
 class CustomHTTPClient(httpx.Client):

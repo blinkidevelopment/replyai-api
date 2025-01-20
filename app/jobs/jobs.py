@@ -3,7 +3,8 @@ from sqlalchemy import or_, and_
 
 from app.db.database import retornar_sessao
 from app.db.models import Empresa, Contato
-from app.jobs.sub_jobs import enviar_retomada_conversa, enviar_confirmacao_consulta
+from app.jobs.sub_jobs import enviar_retomada_conversa, enviar_confirmacao_consulta, enviar_aviso_vencimento, \
+    enviar_cobranca_inadimplente
 
 
 async def retomar_conversa():
@@ -52,5 +53,35 @@ async def confirmar_agendamento():
 
             for empresa in empresas:
                 await enviar_confirmacao_consulta(dia_seguinte.strftime("%Y-%m-%d"), data_atual.strftime("%Y-%m-%dT%H:%M:%S"), empresa, db)
+        except Exception as e:
+            print(f"Erro ao processar: {e}")
+
+
+async def avisar_vencimento():
+    data_atual = datetime.now()
+    data_atual_formatada = data_atual.strftime("%Y-%m-%d")
+    dia_seguinte = (data_atual + timedelta(days=1)).strftime("%Y-%m-%d")
+    dia_adiante = (data_atual + timedelta(days=3)).strftime("%Y-%m-%d")
+
+    with retornar_sessao() as db:
+        try:
+            empresas = db.query(Empresa).filter_by(lembrar_vencimentos_ativo=True).all()
+
+            for empresa in empresas:
+                await enviar_aviso_vencimento(dia_seguinte, data_atual_formatada, empresa, db)
+                await enviar_aviso_vencimento(dia_adiante, data_atual_formatada, empresa, db)
+        except Exception as e:
+            print(f"Erro ao processar: {e}")
+
+
+async def cobrar_inadimplentes():
+    data_atual = datetime.now().strftime("%Y-%m-%d")
+
+    with retornar_sessao() as db:
+        try:
+            empresas = db.query(Empresa).filter_by(cobrar_inadimplentes_ativo=True).all()
+
+            for empresa in empresas:
+                await enviar_cobranca_inadimplente(data_atual, empresa, db)
         except Exception as e:
             print(f"Erro ao processar: {e}")
