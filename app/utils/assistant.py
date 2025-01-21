@@ -1,6 +1,8 @@
 import io
+import base64
 from typing import List
 
+from PIL import Image
 from fastapi import UploadFile
 import httpx
 from openai import OpenAI
@@ -58,28 +60,24 @@ class Assistant:
                     **mensagem_base
                 )
 
-    def adicionar_imagens(self, id_imagens: list, thread_id: str | None):
+    def adicionar_imagens(self, id_imagens: list[str], thread_id: str | None):
         for imagem in id_imagens:
-            if thread_id is None:
-                self.mensagens.append(
-                    {
-                        "role": "user",
-                        "content": [
-                            {
-                                "type": "image_file",
-                                "image_file": {
-                                    "file_id": imagem,
-                                    "detail": "high"
-                                }
+            if imagem.startswith("http"):
+                mensagem_base = {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": imagem
                             }
-                        ]
-                    }
-                )
+                        }
+                    ]
+                }
             else:
-                self.client.beta.threads.messages.create(
-                    thread_id=thread_id,
-                    role="user",
-                    content=[
+                mensagem_base = {
+                    "role": "user",
+                    "content": [
                         {
                             "type": "image_file",
                             "image_file": {
@@ -88,12 +86,28 @@ class Assistant:
                             }
                         }
                     ]
+                }
+
+            if thread_id is None:
+                self.mensagens.append(mensagem_base)
+            else:
+                self.client.beta.threads.messages.create(
+                    thread_id=thread_id,
+                    **mensagem_base
                 )
 
     def subir_imagens(self, imagens: list):
         id_imagens = []
 
         for i, imagem in enumerate(imagens):
+            if isinstance(imagem, str):
+                if imagem.startswith("http"):
+                    id_imagens.append(imagem)
+                    continue
+                else:
+                    img_data = base64.b64decode(imagem)
+                    imagem = Image.open(io.BytesIO(img_data))
+
             img_bytes = io.BytesIO()
             imagem.save(img_bytes, format="PNG")
             img_bytes.seek(0)

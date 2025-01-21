@@ -36,11 +36,11 @@ class ImageMessage(BaseModel):
     directPath: str
     mediaKeyTimestamp: str
     jpegThumbnail: str
-    firstScanSidecar: str
-    firstScanLength: str
-    scansSidecar: str
-    scanLengths: List[int]
-    midQualityFileSha256: str
+    firstScanSidecar: Optional[str] = None
+    firstScanLength: Optional[str] = None
+    scansSidecar: Optional[str] = None
+    scanLengths: Optional[List[int]] = None
+    midQualityFileSha256: Optional[str] = None
 
 class AudioMessage(BaseModel):
     url: str

@@ -83,7 +83,7 @@ class Digisac(MessageClient):
         resposta = requests.post(endpoint, headers=self.headers, json=request)
         return resposta
 
-    def obter_arquivo(self, request: DigisacRequest):
+    def obter_arquivo(self, request: DigisacRequest, apenas_url: bool = False):
         tentativas = 0
         url = ""
         endpoint = f"{self.base_url}/messages/{request.data.message.id}?include=file"
@@ -106,6 +106,9 @@ class Digisac(MessageClient):
                 tentativas +=1
 
         if url != "":
+            if apenas_url:
+                return url
+
             arquivo = requests.get(url)
 
             if arquivo.status_code == 200:

@@ -8,7 +8,8 @@ from app.utils.message_client import DadosContato
 
 
 async def executar_thread(
-        mensagem: str,
+        mensagem: str | None,
+        imagem: str | None,
         contato: Contato,
         dados_contato: DadosContato | None,
         assistente: Assistant,
@@ -18,7 +19,11 @@ async def executar_thread(
         assistente.adicionar_mensagens([mensagem], [], contato.threadId or None)
 
     if dados_contato:
-        assistente.adicionar_mensagens([dados_contato.__str__()], [], None)
+        assistente.adicionar_mensagens([dados_contato.__str__()], [], contato.threadId or None)
+
+    if imagem:
+        id_imagens = assistente.subir_imagens([imagem])
+        assistente.adicionar_imagens(id_imagens, contato.threadId or None)
 
     resposta, thread_id = assistente.criar_rodar_thread(thread_id=contato.threadId)
 

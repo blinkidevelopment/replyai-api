@@ -47,13 +47,13 @@ async def obter_criar_contato(request: DigisacRequest | EvolutionAPIRequest | No
 
         contato.lastMessage = agora
         contato.recallCount = 0
-
-        if contato.assistenteAtual:
-            assistente_db = db.query(Assistente).filter_by(id=contato.assistenteAtual, id_empresa=empresa.id).first()
-        else:
-            assistente_db = db.query(Assistente).filter_by(id=empresa.assistentePadrao, id_empresa=empresa.id).first()
-            await atualizar_assistente_atual_contato(contato, assistente_db.id, db)
         db.commit()
+
+    if contato.assistenteAtual:
+        assistente_db = db.query(Assistente).filter_by(id=contato.assistenteAtual, id_empresa=empresa.id).first()
+    else:
+        assistente_db = db.query(Assistente).filter_by(id=empresa.assistentePadrao, id_empresa=empresa.id).first()
+        await atualizar_assistente_atual_contato(contato, assistente_db.id, db)
     assistente = Assistant(nome=assistente_db.nome, id=assistente_db.assistantId)
     if not contato.threadId and dados_contato is None:
         dados_contato = message_client.obter_dados_contato(request=request)

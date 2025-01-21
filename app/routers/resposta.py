@@ -8,7 +8,7 @@ from app.services.contato_service import obter_criar_contato, mudar_recebimento_
 from app.services.direcionamento_service import direcionar
 from app.services.empresa_service import obter_empresa
 from app.services.thread_service import executar_thread
-from app.services.mensagem_service import obter_mensagem_audio, enviar_mensagem
+from app.services.mensagem_service import obter_mensagem, enviar_mensagem
 from app.db.database import obter_sessao
 from app.utils.evolutionapi import EvolutionAPI
 
@@ -39,12 +39,12 @@ async def responder(
             if not contato.receber_respostas_ia:
                 return resultado
 
-            mensagem, audio = await obter_mensagem_audio(request, message_client, assistente)
+            mensagem, audio, imagem = await obter_mensagem(request, message_client, assistente)
 
             if isinstance(message_client, EvolutionAPI):
                 message_client.enviar_presenca(request.data.key.remoteJid, audio)
 
-            resposta = await executar_thread(mensagem, contato, dados_contato, assistente, db)
+            resposta = await executar_thread(mensagem, imagem, contato, dados_contato, assistente, db)
             await direcionar(resposta, audio, message_client, agenda_client, crm_client, empresa, contato, assistente, db)
             resultado = True
         return resultado

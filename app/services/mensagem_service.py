@@ -49,18 +49,24 @@ def criar_message_client(empresa: Empresa, db: Session):
     return None
 
 
-async def obter_mensagem_audio(request: DigisacRequest | EvolutionAPIRequest, message_client: MessageClient, assistente: Assistant):
+async def obter_mensagem(request: DigisacRequest | EvolutionAPIRequest, message_client: MessageClient, assistente: Assistant):
     audio = False
     mensagem = ""
+    imagem = ""
 
     if isinstance(request, DigisacRequest):
         if request.data.message.type == "audio" or request.data.message.type == "ptt":
             audio = True
         else:
             mensagem = request.data.message.text or ""
+            if request.data.message.type == "image":
+                imagem = message_client.obter_arquivo(request=request, apenas_url=True)
     elif isinstance(request, EvolutionAPIRequest):
         if request.data.message.audioMessage is not None:
             audio = True
+        elif request.data.message.imageMessage is not None:
+            mensagem = request.data.message.imageMessage.caption
+            imagem = request.data.message.base64
         else:
             if request.data.message.extendedTextMessage:
                 mensagem = request.data.message.extendedTextMessage.text
@@ -72,4 +78,4 @@ async def obter_mensagem_audio(request: DigisacRequest | EvolutionAPIRequest, me
         if arquivo is not None:
             transcricao = await assistente.transcrever_audio(arquivo)
             mensagem = transcricao
-    return mensagem, audio
+    return mensagem, audio, imagem
