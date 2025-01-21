@@ -56,7 +56,7 @@ class GoogleCalendar(AgendaClient):
 
         return [Schedule.from_dict(data=item, config=config) for item in responses]
 
-    async def cadastrar_evento(self, agenda: str, data: str, titulo: str):
+    async def cadastrar_evento(self, agenda: str, data: str, titulo: str, descricao: str, localizacao: str):
         data = datetime.strptime(data, '%Y-%m-%dT%H:%M:%S').astimezone(self.timezone)
         data_final = data + timedelta(minutes=self.duracao_evento)
 
@@ -71,6 +71,12 @@ class GoogleCalendar(AgendaClient):
                 "timeZone": str(self.timezone)
             }
         }
+
+        if descricao:
+            evento["description"] = descricao
+
+        if localizacao:
+            evento["location"] = localizacao
 
         evento_cadastrado = self.service.events().insert(calendarId=agenda, body=evento).execute()
         return evento_cadastrado

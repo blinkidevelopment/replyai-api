@@ -103,7 +103,9 @@ async def cadastrar_evento(
         resposta = RespostaAgendamento.from_dict(json.loads(resposta))
 
         if resposta.tag == "DATA VÁLIDA":
-            await agenda_client.cadastrar_evento(agenda=endereco_agenda, data=resposta.data_hora_agendamento, titulo=resposta.titulo_evento)
+            await agenda_client.cadastrar_evento(agenda=endereco_agenda, data=resposta.data_hora_agendamento,
+                                                 titulo=resposta.titulo_evento, descricao=resposta.descricao,
+                                                 localizacao=resposta.localizacao)
             return resposta.mensagem
         else:
             return resposta.mensagem

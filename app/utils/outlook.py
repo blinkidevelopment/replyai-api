@@ -1,7 +1,10 @@
 from datetime import datetime, timedelta
 from azure.identity import ClientSecretCredential
 from msgraph import GraphServiceClient
+from msgraph.generated.models.body_type import BodyType
 from msgraph.generated.models.free_busy_status import FreeBusyStatus
+from msgraph.generated.models.item_body import ItemBody
+from msgraph.generated.models.location import Location
 from msgraph.generated.users.item.calendar.get_schedule.get_schedule_request_builder import RequestConfiguration
 from msgraph.generated.users.item.calendar.get_schedule.get_schedule_post_request_body import GetSchedulePostRequestBody
 from msgraph.generated.users.item.calendar.events.item.calendar.calendar_request_builder import RequestConfiguration as EventsRequestConfiguration
@@ -46,7 +49,7 @@ class Outlook(AgendaClient):
         except Exception as e:
             print(e)
     
-    async def cadastrar_evento(self, agenda: str, data: str, titulo: str):
+    async def cadastrar_evento(self, agenda: str, data: str, titulo: str, descricao: str | None = None, localizacao: str | None = None):
         try:
             data_final = datetime.strptime(data, "%Y-%m-%dT%H:%M:%S") + timedelta(minutes=self.duracao_evento)
 
@@ -54,6 +57,18 @@ class Outlook(AgendaClient):
             request_body.subject = titulo
             request_body.start = DateTimeTimeZone(date_time=f"{data}", time_zone=self.timezone)
             request_body.end = DateTimeTimeZone(date_time=f"{data_final.strftime("%Y-%m-%dT%H:%M:%S")}", time_zone=self.timezone)
+
+            if descricao:
+                request_body.body = ItemBody(
+                    content_type=BodyType("HTML"),
+                    content=descricao
+                )
+
+            if localizacao:
+                request_body.location = Location(
+                    display_name=localizacao
+                )
+
             await self.graph_client.users.by_user_id(agenda).events.post(body=request_body)
             return True
         except Exception as e:

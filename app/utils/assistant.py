@@ -294,9 +294,11 @@ class RespostaDataSugerida:
 
 
 class RespostaAgendamento:
-    def __init__(self, data_hora_agendamento: str, titulo_evento: str, tag: str, mensagem: str):
+    def __init__(self, data_hora_agendamento: str, titulo_evento: str, descricao: str, localizacao: str, tag: str, mensagem: str):
         self.data_hora_agendamento = data_hora_agendamento
         self.titulo_evento = titulo_evento
+        self.descricao = descricao
+        self.localizacao = localizacao
         self.tag = tag
         self.mensagem = mensagem
 
@@ -305,6 +307,8 @@ class RespostaAgendamento:
         return cls(
             data_hora_agendamento=data["data_hora_agendamento"],
             titulo_evento=data["titulo_evento"],
+            descricao=data["descricao"],
+            localizacao=data["localizacao"],
             tag=data["tag"],
             mensagem=data["mensagem"]
         )
