@@ -6,14 +6,12 @@ from PIL import Image
 from fastapi import UploadFile
 import httpx
 from openai import OpenAI
-import os
 import time
 
 
 class Assistant:
     def __init__(self, nome: str, id: str, api_key: str):
-        self.openai_api_key = api_key
-        self.client = OpenAI(http_client=CustomHTTPClient())
+        self.client = OpenAI(http_client=CustomHTTPClient(), api_key=api_key)
         self.nome = nome
         self.id = id
         self.mensagens = []

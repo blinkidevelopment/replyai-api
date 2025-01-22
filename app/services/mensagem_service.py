@@ -3,7 +3,6 @@ from sqlalchemy.orm import Session
 from app.db.models import Contato, Voz, Assistente, Empresa, DigisacClient, EvolutionAPIClient, Midia
 from app.schemas.digisac_schema import DigisacRequest
 from app.schemas.evolutionapi_schema import EvolutionAPIRequest
-from app.services.empresa_service import obter_assistente
 from app.utils.assistant import Assistant
 from app.utils.digisac import Digisac
 from app.utils.eleven_labs import ElevenLabs
@@ -25,10 +24,12 @@ async def enviar_mensagem(mensagem: str, audio: bool, midia: str | None, contato
             voz = db.query(Voz).filter_by(id=assistente_db.id_voz).first()
             if voz is not None:
                 elevenlabs_client = ElevenLabs()
-                assistente_reescrita, _ = await obter_assistente(empresa, "reescrever", None, db)
-                assistente_reescrita.adicionar_mensagens([mensagem], [], None)
-                mensagem_reescrita, _ = assistente_reescrita.criar_rodar_thread(thread_id=contato.threadId)
-                msg_audio = await elevenlabs_client.gerar_audio(mensagem=mensagem_reescrita, id_voz=voz.voiceId, stability=voz.stability, similarity_boost=voz.similarity_boost, style=voz.style)
+                ass_reescrita_db = db.query(Assistente).filter_by(proposito="reescrever", id_empresa=empresa.id).first()
+                if ass_reescrita_db:
+                    assistente_reescrita = Assistant(nome=ass_reescrita_db.nome, id=ass_reescrita_db.assistantId, api_key=empresa.openai_api_key)
+                    assistente_reescrita.adicionar_mensagens([mensagem], [], None)
+                    mensagem_reescrita, _ = assistente_reescrita.criar_rodar_thread(thread_id=contato.threadId)
+                    msg_audio = await elevenlabs_client.gerar_audio(mensagem=mensagem_reescrita, id_voz=voz.voiceId, stability=voz.stability, similarity_boost=voz.similarity_boost, style=voz.style)
     message_client.enviar_mensagem(mensagem=mensagem, base64=msg_audio, mediatype=mediatype, nome_arquivo=None, contact_id=contato.contactId, userId=None, origin="bot", nome_assistente=assistente.nome)
 
     if midia and empresa:
