@@ -4,9 +4,9 @@ from app.db.models import Contato, Empresa, Agenda
 from app.services.agendamento_service import extrair_dados_evento, criar_agenda_client
 from app.services.cobranca_service import extrair_dados_cobranca, criar_financial_client
 from app.services.contato_service import redefinir_contato, obter_criar_contato, atualizar_thread_contato, \
-    atualizar_assistente_atual_contato
+    atualizar_assistente_atual_contato, transferir_contato
 from app.services.direcionamento_service import direcionar
-from app.services.empresa_service import obter_assistente
+from app.services.empresa_service import obter_assistente, obter_departamento
 from app.services.mensagem_service import criar_message_client
 from app.services.thread_service import executar_thread
 from app.utils.digisac import Digisac
@@ -66,6 +66,10 @@ async def enviar_confirmacao_consulta(data: str, data_atual: str, empresa: Empre
                         if not contato.appointmentConfirmation:
                             contato.appointmentConfirmation = True
                             await atualizar_assistente_atual_contato(contato, assistente_db_id, db)
+                        if isinstance(message_client, Digisac):
+                            departamento = await obter_departamento(message_client, None, True, db)
+                            if departamento:
+                                await transferir_contato(message_client, contato, departamento)
                         await direcionar(resposta_extracao.resposta_confirmacao, False, message_client, None, None, empresa, contato, assistente, db)
                         await atualizar_thread_contato(contato, thread_id, db)
 

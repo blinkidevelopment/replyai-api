@@ -38,11 +38,14 @@ async def obter_assistente(empresa: Empresa, proposito: str | None, atalho: str 
     return None, None
 
 
-async def obter_departamento(message_client: Digisac, atalho: str, db: Session):
+async def obter_departamento(message_client: Digisac, atalho: str | None, dpt_confirmacao: bool, db: Session):
     digisac_client_db = db.query(DigisacClient).filter_by(digisacSlug=message_client.slug).first()
 
     if digisac_client_db is not None:
-        departamento = db.query(Departamento).filter_by(atalho=atalho, id_digisac_client=digisac_client_db.id).first()
+        if dpt_confirmacao:
+            departamento = db.query(Departamento).filter_by(departamento_confirmacao=True, id_digisac_client=digisac_client_db.id).first()
+        else:
+            departamento = db.query(Departamento).filter_by(atalho=atalho, id_digisac_client=digisac_client_db.id).first()
         if departamento is not None:
             return departamento
     return None

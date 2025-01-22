@@ -130,6 +130,7 @@ class Departamento(Base):
     comentario = Column(String)
     departmentId = Column(String)
     userId = Column(String)
+    departamento_confirmacao = Column(Boolean)
     id_digisac_client = Column(Integer, ForeignKey("digisac_clients.id"))
 
     digisac_client = relationship("DigisacClient", backref="departamentos")
