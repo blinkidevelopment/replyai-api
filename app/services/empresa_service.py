@@ -33,7 +33,7 @@ async def obter_assistente(empresa: Empresa, proposito: str | None, atalho: str 
         else:
             assistente_db = db.query(Assistente).filter_by(id_empresa=empresa.id, atalho=atalho).first()
         if assistente_db:
-            assistente = Assistant(nome=assistente_db.nome, id=assistente_db.assistantId)
+            assistente = Assistant(nome=assistente_db.nome, id=assistente_db.assistantId, api_key=empresa.openai_api_key)
             return assistente, assistente_db.id
     return None, None
 

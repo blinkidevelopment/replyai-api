@@ -32,7 +32,7 @@ async def extrair_dados_cobranca(
 
     try:
         if assistente_db is not None:
-            assistente = Assistant(nome=assistente_db.nome, id=assistente_db.assistantId)
+            assistente = Assistant(nome=assistente_db.nome, id=assistente_db.assistantId, api_key=empresa.openai_api_key)
             assistente.adicionar_mensagens(mensagens=[instrucao.__str__()], id_arquivos=[], thread_id=None)
             resposta, thread_id = assistente.criar_rodar_thread()
             resposta_obj = RespostaFinanceiro.from_dict(json.loads(resposta))

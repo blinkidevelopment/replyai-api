@@ -11,8 +11,8 @@ import time
 
 
 class Assistant:
-    def __init__(self, nome: str, id: str):
-        self.openai_api_key = os.getenv('OPENAI_API_KEY')
+    def __init__(self, nome: str, id: str, api_key: str):
+        self.openai_api_key = api_key
         self.client = OpenAI(http_client=CustomHTTPClient())
         self.nome = nome
         self.id = id

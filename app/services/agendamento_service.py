@@ -38,7 +38,7 @@ async def verificar_data_sugerida(
     assistente_db = db.query(Assistente).filter_by(proposito="agendar", id_empresa=empresa.id).first()
 
     if assistente_db is not None:
-        assistente = Assistant(nome=assistente_db.nome, id=assistente_db.assistantId)
+        assistente = Assistant(nome=assistente_db.nome, id=assistente_db.assistantId, api_key=empresa.openai_api_key)
         assistente.adicionar_mensagens(mensagens=[instrucao.__str__()], id_arquivos=[], thread_id=contato.threadId)
 
         resposta, _ = assistente.criar_rodar_thread(thread_id=contato.threadId)
@@ -96,7 +96,7 @@ async def cadastrar_evento(
     assistente_db = db.query(Assistente).filter_by(proposito="agendar", id_empresa=empresa.id).first()
 
     if assistente_db is not None:
-        assistente = Assistant(nome=assistente_db.nome, id=assistente_db.assistantId)
+        assistente = Assistant(nome=assistente_db.nome, id=assistente_db.assistantId, api_key=empresa.openai_api_key)
         assistente.adicionar_mensagens(mensagens=[instrucao.__str__()], id_arquivos=[], thread_id=contato.threadId)
 
         resposta, _ = assistente.criar_rodar_thread(thread_id=contato.threadId)
@@ -135,7 +135,7 @@ async def extrair_dados_evento(
 
     try:
         if assistente_db is not None:
-            assistente = Assistant(nome=assistente_db.nome, id=assistente_db.assistantId)
+            assistente = Assistant(nome=assistente_db.nome, id=assistente_db.assistantId, api_key=empresa.openai_api_key)
             assistente.adicionar_mensagens(mensagens=[instrucao.__str__()], id_arquivos=[], thread_id=None)
             resposta, thread_id = assistente.criar_rodar_thread()
             resposta_obj = RespostaConfirmacao.from_dict(json.loads(resposta))
@@ -159,7 +159,7 @@ async def extrair_titulo_agenda_evento(
     assistente_db = db.query(Assistente).filter_by(proposito="agendar", id_empresa=empresa.id).first()
 
     if assistente_db is not None:
-        assistente = Assistant(nome=assistente_db.nome, id=assistente_db.assistantId)
+        assistente = Assistant(nome=assistente_db.nome, id=assistente_db.assistantId, api_key=empresa.openai_api_key)
         assistente.adicionar_mensagens(mensagens=[instrucao.__str__()], id_arquivos=[], thread_id=thread_id)
         resposta, _ = assistente.criar_rodar_thread(thread_id)
 

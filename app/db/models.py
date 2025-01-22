@@ -67,6 +67,7 @@ class Empresa(Base):
     cobrar_inadimplentes_ativo = Column(Boolean)
     tipo_cancelamento_evento = Column(String)
     mensagem_erro_ia = Column(String)
+    openai_api_key = Column(String)
     assistentePadrao = Column(Integer, ForeignKey("assistentes.id"))
 
     assistente = relationship("Assistente", backref="assistente_padrao", foreign_keys=[assistentePadrao])
