@@ -23,7 +23,17 @@ class Digisac(MessageClient):
         self.defaultUserId = defaultUserId
         self.defaultAssistantName = defaultAssistantName
 
-    def enviar_mensagem(self, mensagem: str | None, audio: str | None, contact_id: str, userId: str | None, origin: str, nome_assistente: str | None):
+    def enviar_mensagem(
+            self,
+            mensagem: str | None,
+            base64: str | None,
+            mediatype: str | None,
+            nome_arquivo: str | None,
+            contact_id: str,
+            userId: str | None,
+            origin: str,
+            nome_assistente: str | None
+    ):
         endpoint = f"{self.base_url}/messages"
 
         request = {
@@ -34,11 +44,11 @@ class Digisac(MessageClient):
             "origin": origin
         }
 
-        if audio is not None:
+        if base64:
             file = {
-                "base64": audio,
-                "mimetype": "audio/mpeg",
-                "name": "resposta"
+                "base64": base64,
+                "mimetype": mediatype,
+                "name": nome_arquivo or "resposta"
             }
             request["file"] = file
             request["text"] = ""
@@ -127,6 +137,9 @@ class Digisac(MessageClient):
                 return {"filename": arquivo_nome, "mimetype": mime_type, "file_stream": file_stream}
             return None
         return None
+
+    def baixar_arquivo(self, url: str):
+        return super().baixar_arquivo(url)
 
     def obter_dados_contato(self, request: DigisacRequest):
         endpoint = f"{self.base_url}/contacts/{request.data.contactId}"

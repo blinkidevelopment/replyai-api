@@ -54,6 +54,6 @@ async def responder(
             if dados_empresa is not None:
                 empresa, message_client, agenda_client, crm_client = dados_empresa
                 contato, assistente, _ = await obter_criar_contato(request, None, empresa, message_client, crm_client, db)
-                await enviar_mensagem(empresa.mensagem_erro_ia, False, contato, message_client, assistente, db)
+                await enviar_mensagem(empresa.mensagem_erro_ia, False, None, contato, None, message_client, assistente, db)
             pass
         return {"erro": str(e)}

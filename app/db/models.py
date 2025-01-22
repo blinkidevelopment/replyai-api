@@ -83,6 +83,21 @@ class Agenda(Base):
     empresa = relationship("Empresa", backref="agenda")
 
 
+class Midia(Base):
+    __tablename__ = "midias"
+
+    id = Column(Integer, primary_key=True, index=True)
+    url = Column(String)
+    tipo = Column(String)
+    mediatype = Column(String)
+    nome = Column(String)
+    atalho = Column(String)
+    ordem = Column(Integer)
+    id_empresa = Column(Integer, ForeignKey("empresas.id"))
+
+    empresa = relationship("Empresa", backref="midias")
+
+
 class EvolutionAPIClient(Base):
     __tablename__ = "evolutionapi_clients"
 

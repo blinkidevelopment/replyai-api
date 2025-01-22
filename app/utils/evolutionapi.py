@@ -24,29 +24,32 @@ class EvolutionAPI(MessageClient):
     def enviar_mensagem(self, **kwargs):
         contact_id = kwargs.get("contact_id", "")
         mensagem = kwargs.get("mensagem")
-        audio = kwargs.get("audio", None)
+        base64 = kwargs.get("base64", None)
+        mediatype = kwargs.get("mediatype", None)
+        nome_arquivo = kwargs.get("nome_arquivo", "")
         nome_assistente = kwargs.get("nome_assistente", self.defaultAssistantName)
         numero = re.match(r"(\d+)@", contact_id).group(1)
 
-        if audio is not None:
-            endpoint = f"{self.base_url}/message/sendWhatsAppAudio/{self.instance}"
-            request = {
-                "number": numero,
-                "audioMessage": {
-                    "audio": audio
-                },
-                "options": {
-                    "encoding": False
+        request = {
+            "number": numero
+        }
+
+        if base64 is not None:
+            if mediatype == "audio":
+                endpoint = f"{self.base_url}/message/sendWhatsAppAudio/{self.instance}"
+                request["audioMessage"] = {"audio": base64}
+                request["options"] = {"encoding": False}
+            else:
+                endpoint = f"{self.base_url}/message/sendMedia/{self.instance}"
+                request["mediaMessage"] = {
+                    "mediatype": mediatype,
+                    "fileName": nome_arquivo,
+                    "caption": mensagem,
+                    "media": base64
                 }
-            }
         else:
             endpoint = f"{self.base_url}/message/sendText/{self.instance}"
-            request = {
-                "number": numero,
-                "textMessage": {
-                    "text": f"*{nome_assistente}:*\n{mensagem or ''}"
-                }
-            }
+            request["textMessage"] = {"text": f"*{nome_assistente}:*\n{mensagem or ''}"}
 
         resposta = requests.post(endpoint, headers=self.headers, json=request)
         return resposta
@@ -80,3 +83,6 @@ class EvolutionAPI(MessageClient):
         arquivo_nome = f"arquivo_baixado{extensao}"
 
         return {"filename": arquivo_nome, "mimetype": mimetype, "file_stream": file_stream}
+
+    def baixar_arquivo(self, url: str):
+        return super().baixar_arquivo(url)

@@ -1,4 +1,7 @@
+import base64
 from abc import ABC, abstractmethod
+
+import requests
 
 
 class MessageClient(ABC):
@@ -17,6 +20,18 @@ class MessageClient(ABC):
     @abstractmethod
     def obter_arquivo(self, **kwargs):
         pass
+
+    @abstractmethod
+    def baixar_arquivo(self, url: str):
+        try:
+            resposta = requests.get(url)
+            resposta.raise_for_status()
+
+            conteudo = base64.b64encode(resposta.content).decode('utf-8')
+            return conteudo
+        except requests.exceptions.RequestException as e:
+            print(f"Erro ao baixar o arquivo: {e}")
+            return None
 
 
 class DadosContato:

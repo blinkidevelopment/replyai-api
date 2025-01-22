@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 
-from app.db.models import Contato, Voz, Assistente, Empresa, DigisacClient, EvolutionAPIClient
+from app.db.models import Contato, Voz, Assistente, Empresa, DigisacClient, EvolutionAPIClient, Midia
 from app.schemas.digisac_schema import DigisacRequest
 from app.schemas.evolutionapi_schema import EvolutionAPIRequest
 from app.utils.assistant import Assistant
@@ -10,17 +10,29 @@ from app.utils.evolutionapi import EvolutionAPI
 from app.utils.message_client import MessageClient
 
 
-async def enviar_mensagem(mensagem: str, audio: bool, contato: Contato, message_client: MessageClient, assistente: Assistant, db: Session):
+async def enviar_mensagem(mensagem: str, audio: bool, midia: str | None, contato: Contato, empresa: Empresa | None, message_client: MessageClient, assistente: Assistant, db: Session):
     msg_audio = None
+    mediatype = ""
 
     if audio:
+        if isinstance(message_client, Digisac):
+            mediatype = "audio/mpeg"
+        else:
+            mediatype = "audio"
         assistente_db = db.query(Assistente).filter_by(assistantId=assistente.id).first()
         if assistente_db is not None:
             voz = db.query(Voz).filter_by(id=assistente_db.id_voz).first() #TODO: reescrever a mensagem antes de gerar o áudio
             if voz is not None:
                 elevenlabs_client = ElevenLabs()
                 msg_audio = await elevenlabs_client.gerar_audio(mensagem=mensagem, id_voz=voz.voiceId, stability=voz.stability, similarity_boost=voz.similarity_boost, style=voz.style)
-    message_client.enviar_mensagem(mensagem=mensagem, audio=msg_audio, contact_id=contato.contactId, userId=None, origin="bot", nome_assistente=assistente.nome)
+    message_client.enviar_mensagem(mensagem=mensagem, base64=msg_audio, mediatype=mediatype, nome_arquivo=None, contact_id=contato.contactId, userId=None, origin="bot", nome_assistente=assistente.nome)
+
+    if midia and empresa:
+        midias_db = db.query(Midia).filter_by(atalho=midia, id_empresa=empresa.id).order_by(Midia.ordem).all()
+        for midia_db in midias_db:
+            conteudo = message_client.baixar_arquivo(midia_db.url)
+            if conteudo:
+                message_client.enviar_mensagem(mensagem="", base64=conteudo, mediatype=midia_db.mediatype, nome_arquivo=midia_db.nome, contact_id=contato.contactId, userId=None, origin="bot", nome_assistente=assistente.nome)
 
 
 def criar_message_client(empresa: Empresa, db: Session):

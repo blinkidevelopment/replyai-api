@@ -260,10 +260,11 @@ class Assistant:
 
 
 class Resposta:
-    def __init__(self, atividade: str, departamento: str, mensagem: str, agenda: str, assistente: str):
+    def __init__(self, atividade: str, departamento: str, mensagem: str, midia: str, agenda: str, assistente: str):
         self.atividade = atividade
         self.departamento = departamento
         self.mensagem = mensagem
+        self.midia = midia
         self.agenda = agenda
         self.assistente = assistente
 
@@ -273,6 +274,7 @@ class Resposta:
             atividade=data["atividade"],
             departamento=data["departamento"],
             mensagem=data["mensagem"],
+            midia=data["midia"],
             agenda=data["agenda"],
             assistente=data["assistente"]
         )
