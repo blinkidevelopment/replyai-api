@@ -42,10 +42,22 @@ async def extrair_dados_cobranca(
     return {}, None
 
 
-def criar_financial_client(empresa: Empresa, db: Session):
+def criar_financial_client(empresa: Empresa, db: Session, client_number: int | None = None):
+    clients = []
+
     if empresa.financial_client_type == "asaas":
-        asaas_client_db = db.query(AsaasClient).filter_by(id_empresa=empresa.id).first()
-        if asaas_client_db:
-            return Asaas(
-                token=asaas_client_db.token
+        if client_number:
+            asaas_client_db = db.query(AsaasClient).filter_by(id_empresa=empresa.id, client_number=client_number).first()
+        else:
+            asaas_client_db = db.query(AsaasClient).filter_by(id_empresa=empresa.id).all()
+
+        for client in asaas_client_db:
+            clients.append(
+                Asaas(token=client.token)
             )
+
+    if clients:
+        if not client_number:
+            return clients
+        else:
+            return clients[0]

@@ -76,22 +76,24 @@ async def enviar_confirmacao_consulta(data: str, data_atual: str, empresa: Empre
 
 async def enviar_aviso_vencimento(data_cobranca: str, data_atual: str, empresa: Empresa, db: Session):
     message_client = criar_message_client(empresa, db)
-    financial_client = criar_financial_client(empresa, db)
+    financial_clients = criar_financial_client(empresa, db)
 
-    resposta = financial_client.listar_cobrancas(due_date_le=data_cobranca, due_date_ge=data_cobranca, status="PENDING", limit="100")
-    if resposta.get("totalCount", 0) > 0:
-        for cobranca in resposta.get("data", []):
-            await processar_cobranca("extrair_dados_aviso_vencimento", cobranca, data_atual, empresa, message_client, financial_client, db)
+    for financial_client in financial_clients:
+        resposta = financial_client.listar_cobrancas(due_date_le=data_cobranca, due_date_ge=data_cobranca, status="PENDING", limit="100")
+        if resposta.get("totalCount", 0) > 0:
+            for cobranca in resposta.get("data", []):
+                await processar_cobranca("extrair_dados_aviso_vencimento", cobranca, data_atual, empresa, message_client, financial_client, db)
 
 
 async def enviar_cobranca_inadimplente(data: str, empresa: Empresa, db: Session):
     message_client = criar_message_client(empresa, db)
-    financial_client = criar_financial_client(empresa, db)
+    financial_clients = criar_financial_client(empresa, db)
 
-    resposta = financial_client.listar_cobrancas(status="OVERDUE", limit="100")
-    if resposta.get("totalCount", 0) > 0:
-        for cobranca in resposta.get("data", []):
-            await processar_cobranca("extrair_dados_inadimplencia", cobranca, data, empresa, message_client, financial_client, db)
+    for financial_client in financial_clients:
+        resposta = financial_client.listar_cobrancas(status="OVERDUE", limit="100")
+        if resposta.get("totalCount", 0) > 0:
+            for cobranca in resposta.get("data", []):
+                await processar_cobranca("extrair_dados_inadimplencia", cobranca, data, empresa, message_client, financial_client, db)
 
 
 async def processar_cobranca(acao: str, cobranca: dict, data_atual: str, empresa: Empresa, message_client: MessageClient, financial_client: FinancialClient, db: Session):

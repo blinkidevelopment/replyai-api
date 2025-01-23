@@ -42,17 +42,18 @@ async def executar_cobrar_inadimplente():
     await cobrar_inadimplentes()
     return {"status": "Trabalho [cobrar_inadimplentes] executado com sucesso"}
 
-@router.post("/agradecer_pagamento/{slug}/{token}")
+@router.post("/agradecer_pagamento/{slug}/{token}/{client_number}")
 async def executar_agradecer_pagamento(
         request: AsaasPaymentRequest,
         slug: str,
         token: str,
+        client_number: int,
         db: Session = Depends(obter_sessao)
 ):
     dados_empresa = await obter_empresa(slug, token, db)
     if dados_empresa is not None:
         empresa, message_client, _, __ = dados_empresa
-        financial_client = criar_financial_client(empresa, db)
+        financial_client = criar_financial_client(empresa, db, client_number)
         await processar_cobranca("extrair_dados_agradecer_pagamento", request.payment.model_dump(), "", empresa,
                                  message_client, financial_client, db)
         return {"status": "Trabalho [agradecer_pagamento] executado com sucesso"}

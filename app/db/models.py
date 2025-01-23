@@ -203,6 +203,8 @@ class AsaasClient(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     token = Column(String)
+    rotulo = Column(String)
+    client_number = Column(Integer)
     id_empresa = Column(Integer, ForeignKey("empresas.id"))
 
     empresa = relationship("Empresa", backref="asaas_client")
