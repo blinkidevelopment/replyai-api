@@ -1,0 +1,121 @@
+from pydantic import BaseModel, field_validator, Field
+from typing import List, Optional, Literal
+
+
+class InformacoesBasicas(BaseModel):
+    nome: str
+    fuso_horario: str
+
+class InformacoesAssistentes(BaseModel):
+    assistente_padrao: int
+
+class InformacoesAssistente(BaseModel):
+    id: Optional[int]
+    nome: str
+    assistant_id: str
+    proposito: str
+    atalho: str
+    voz: int
+
+class InformacoesMensagens(BaseModel):
+    tipo_cliente: Literal["digisac", "evolution"]
+    tempo_recall_min: int
+    tempo_recall_final_min: int
+    quant_recalls: int
+    ativar_recall: bool
+    mensagem_erro_ia: str = Field(..., min_length=1)
+
+class InformacoesEvolutionAPI(BaseModel):
+    api_key: str
+    instance_name: str
+
+class InformacoesDigisac(BaseModel):
+    slug: str
+    token: str
+    user_id: str
+    service_id: str
+
+class InformacoesDepartamento(BaseModel):
+    id: Optional[int] = None
+    atalho: str
+    comentario: str
+    department_id: str
+    user_id: Optional[str] = None
+    departamento_confirmacao: bool
+
+    @field_validator("user_id", mode="before")
+    @classmethod
+    def string_vazia(cls, valor):
+        return valor or None
+
+class InformacoesAgenda(BaseModel):
+    tipo_cliente: Optional[Literal["outlook", "google_calendar"]]
+    tipo_cancelamento_evento: str
+    ativar_confirmacao: bool
+
+    @field_validator("tipo_cliente", mode="before")
+    @classmethod
+    def string_vazia(cls, valor):
+        return valor if valor.strip() else None
+
+class InformacoesAgendaUnica(BaseModel):
+    id: Optional[int] = None
+    endereco: str
+    atalho: str
+
+class InformacoesOutlook(BaseModel):
+    client_id: str
+    tenant_id: str
+    client_secret: str
+    duracao_evento: int
+    usuario_padrao: str
+    hora_inicial: str
+    hora_final: str
+    fuso_horario: str
+
+class InformacoesGoogleCalendar(BaseModel):
+    project_id: str
+    private_key_id: str
+    private_key: str
+    client_email: str
+    client_id: str
+    client_x509_cert_url: str
+    api_key: str
+    duracao_evento: int
+    hora_inicial: str
+    hora_final: str
+    fuso_horario: str
+
+class InformacoesCRM(BaseModel):
+    tipo_cliente: Optional[Literal["rdstation"]]
+
+    @field_validator("tipo_cliente", mode="before")
+    @classmethod
+    def string_vazia(cls, valor):
+        return valor if valor.strip() else None
+
+class InformacoesRDStationCRMClient(BaseModel):
+    token: str
+    id_fonte_padrao: str
+
+class InformacoesRDStationDealStage(BaseModel):
+    id: Optional[int]
+    atalho: str
+    deal_stage_id: str
+    user_id: str
+    estagio_inicial: bool
+
+class InformacoesFinanceiras(BaseModel):
+    tipo_cliente: Optional[Literal["asaas"]]
+    lembrar_vencimentos: bool
+    cobrar_inadimplentes: bool
+
+    @field_validator("tipo_cliente", mode="before")
+    @classmethod
+    def string_vazia(cls, valor):
+        return valor if valor.strip() else None
+
+class InformacoesAsaas(BaseModel):
+    token: str
+    rotulo: str
+    numero_cliente: int

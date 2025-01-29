@@ -1,0 +1,129 @@
+from pydantic import BaseModel
+from typing import List, Optional
+
+
+class AsaasClientSchema(BaseModel):
+    id: int
+    token: str
+    rotulo: str
+    client_number: int
+
+class RDStationCRMDealStageSchema(BaseModel):
+    id: int
+    atalho: str
+    deal_stage_id: str
+    user_id: Optional[str]
+    deal_stage_inicial: bool
+
+class RDStationCRMClientSchema(BaseModel):
+    id: int
+    token: str
+    id_fonte_padrao: str
+    estagios: Optional[List[RDStationCRMDealStageSchema]]
+
+class AgendaSchema(BaseModel):
+    id: int
+    endereco: str
+    atalho: str
+
+class GoogleCalendarClientSchema(BaseModel):
+    id: int
+    project_id: str
+    private_key_id: str
+    private_key: str
+    client_email: str
+    client_id: str
+    client_x509_cert_url: str
+    api_key: str
+    duracao_evento: int
+    hora_inicio_agenda: str
+    hora_final_agenda: str
+    timezone: str
+
+class OutlookClientSchema(BaseModel):
+    id: int
+    clientId: str
+    tenantId: str
+    clientSecret: str
+    duracaoEvento: int
+    usuarioPadrao: str
+    horaInicioAgenda: str
+    horaFinalAgenda: str
+    timeZone: str
+
+class EvolutionAPIClientSchema(BaseModel):
+    id: int
+    apiKey: str
+    instanceName: str
+
+class DepartamentoSchema(BaseModel):
+    id: int
+    atalho: str
+    comentario: str
+    departmentId: str
+    userId: Optional[str]
+    departamento_confirmacao: bool
+
+class DigisacClientSchema(BaseModel):
+    id: int
+    digisacSlug: str
+    digisacToken: str
+    digisacDefaultUser: str
+    service_id: str
+    departamentos: Optional[List[DepartamentoSchema]]
+
+    class Config:
+        orm_mode = True
+
+class VozSchema(BaseModel):
+    id: int
+    voiceId: str
+    stability: float
+    similarity_boost: float
+    style: float
+
+    class Config:
+        orm_mode = True
+
+class AssistenteSchema(BaseModel):
+    id: int
+    assistantId: str
+    nome: str
+    proposito: str
+    atalho: str
+    voz: Optional[VozSchema]
+
+    class Config:
+        orm_mode = True
+
+class EmpresaSchema(BaseModel):
+    id: int
+    nome: str
+    slug: str
+    token: str
+    fuso_horario: str
+    message_client_type: str
+    agenda_client_type: Optional[str]
+    crm_client_type: Optional[str]
+    financial_client_type: Optional[str]
+    recall_timeout_minutes: Optional[int]
+    final_recall_timeout_minutes: Optional[int]
+    recall_quant: Optional[int]
+    recall_ativo: bool
+    confirmar_agendamentos_ativo: Optional[bool]
+    lembrar_vencimentos_ativo: Optional[bool]
+    cobrar_inadimplentes_ativo: Optional[bool]
+    tipo_cancelamento_evento: Optional[str]
+    mensagem_erro_ia: Optional[str]
+    assistentes: List[AssistenteSchema]
+    assistentePadrao: Optional[int]
+    agenda: Optional[List[AgendaSchema]]
+    digisac_client: Optional[List[DigisacClientSchema]]
+    evolutionapi_client: Optional[List[EvolutionAPIClientSchema]]
+    outlook_client: Optional[List[OutlookClientSchema]]
+    googlecalendar_client: Optional[List[GoogleCalendarClientSchema]]
+    rdstationcrm_client: Optional[List[RDStationCRMClientSchema]]
+    asaas_client: Optional[List[AsaasClientSchema]]
+
+    class Config:
+        orm_mode = True

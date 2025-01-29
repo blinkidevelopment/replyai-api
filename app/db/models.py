@@ -3,6 +3,19 @@ from sqlalchemy.orm import relationship
 from app.db.database import Base
 
 
+class Usuario(Base):
+    __tablename__ = "usuarios"
+
+    id = Column(Integer, primary_key=True, index=True)
+    nome = Column(String, index=True)
+    email = Column(String, unique=True, index=True)
+    senha = Column(String)
+    ativo = Column(Boolean, default=True)
+    id_empresa = Column(Integer, ForeignKey("empresas.id"))
+
+    empresa = relationship("Empresa", backref="usuarios")
+
+
 class Contato(Base):
     __tablename__ = "contatos"
 
@@ -126,7 +139,7 @@ class DigisacClient(Base):
 class Departamento(Base):
     __tablename__ = "departamentos"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     atalho = Column(String)
     comentario = Column(String)
     departmentId = Column(String)

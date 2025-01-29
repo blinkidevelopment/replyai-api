@@ -7,6 +7,7 @@ anyio==4.7.0
 attrs==24.2.0
 azure-core==1.32.0
 azure-identity==1.19.0
+bcrypt==4.2.1
 cachetools==5.5.0
 certifi==2024.8.30
 cffi==1.17.1
@@ -55,6 +56,7 @@ openai==1.57.2
 opentelemetry-api==1.29.0
 opentelemetry-sdk==1.29.0
 opentelemetry-semantic-conventions==0.50b0
+passlib==1.7.4
 pendulum==3.0.0
 pillow==11.1.0
 portalocker==2.10.1
@@ -71,6 +73,7 @@ PyJWT==2.10.1
 pyparsing==3.2.1
 python-dateutil==2.9.0.post0
 python-dotenv==1.0.1
+python-multipart==0.0.20
 pytz==2024.2
 requests==2.32.3
 requests-oauthlib==2.0.0

@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Depends
 
-from app.routers import resposta, trabalho
+from app.routers import resposta, trabalho, empresa, usuario
 from fastapi.middleware.cors import CORSMiddleware
 import os
 
@@ -20,5 +20,8 @@ app.add_middleware(
 )
 
 app.include_router(resposta.router, prefix="/resposta", tags=["Respostas"])
-app.include_router(trabalho.router, prefix="/trabalho",tags=["Trabalhos"],
-                   dependencies=[Depends(verificar_chave_secreta)])
+app.include_router(trabalho.router, prefix="/trabalho",tags=["Trabalhos"])
+
+app.include_router(empresa.router, prefix="/empresa", tags=["Empresas"])
+
+app.include_router(usuario.router, prefix="/usuario", tags=["Usuarios"])

@@ -20,7 +20,7 @@ def verificar_chave_secreta(request: Request):
         raise HTTPException(status_code=403, detail="Chave secreta inválida")
 
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(verificar_chave_secreta)])
 
 @router.post("/retomar_conversas")
 async def executar_retomar_conversa():
