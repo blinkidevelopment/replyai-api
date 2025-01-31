@@ -1,23 +1,41 @@
+from typing import List
+
 from fastapi import APIRouter, HTTPException
 from fastapi.params import Depends
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session
 
 from app.db.database import obter_sessao
 from app.db.models import Empresa, Assistente, DigisacClient, EvolutionAPIClient, Departamento, OutlookClient, \
-    GoogleCalendarClient, RDStationCRMClient, RDStationCRMDealStage, AsaasClient, Agenda, Usuario
+    GoogleCalendarClient, RDStationCRMClient, RDStationCRMDealStage, AsaasClient, Agenda, Usuario, Voz
 from app.routers.usuario import obter_usuario_logado
 from app.schemas.atualizacao_empresa_schema import InformacoesBasicas, InformacoesMensagens, InformacoesDigisac, \
     InformacoesEvolutionAPI, InformacoesDepartamento, InformacoesAgenda, InformacoesOutlook, InformacoesGoogleCalendar, \
     InformacoesAssistentes, InformacoesCRM, InformacoesRDStationCRMClient, InformacoesRDStationDealStage, \
-    InformacoesFinanceiras, InformacoesAsaas, InformacoesAssistente, InformacoesAgendaUnica
+    InformacoesFinanceiras, InformacoesAsaas, InformacoesAssistente, InformacoesAgendaUnica, InformacoesVoz
 from app.schemas.empresa_schema import EmpresaSchema, AgendaSchema, DepartamentoSchema, AssistenteSchema, \
     DigisacClientSchema, EvolutionAPIClientSchema, OutlookClientSchema, GoogleCalendarClientSchema, \
-    RDStationCRMClientSchema, RDStationCRMDealStageSchema, AsaasClientSchema
+    RDStationCRMClientSchema, RDStationCRMDealStageSchema, AsaasClientSchema, VozSchema, EmpresaMinSchema
+
+
+async def verificar_permissao_empresa(
+    slug: str,
+    db: Session = Depends(obter_sessao),
+    usuario: Usuario = Depends(obter_usuario_logado)
+):
+    empresa = db.query(Empresa).filter_by(slug=slug).first()
+    if not empresa:
+        raise HTTPException(status_code=404, detail="Empresa não encontrada")
+
+    if usuario.id_empresa is not None and usuario.id_empresa != empresa.id:
+        raise HTTPException(status_code=403, detail="Você não tem permissão para acessar esta empresa")
+
+    return empresa
+
 
 # TODO: implementar services
 router = APIRouter(dependencies=[Depends(obter_usuario_logado)])
 
-@router.get("/") # TODO: retornar apenas nome, slug e id da empresa
+@router.get("/", response_model=List[EmpresaMinSchema])
 async def obter_todas_empresas(usuario: Usuario = Depends(obter_usuario_logado), db: Session = Depends(obter_sessao)):
     if not usuario.id_empresa:
         empresas = db.query(Empresa).all()
@@ -25,38 +43,33 @@ async def obter_todas_empresas(usuario: Usuario = Depends(obter_usuario_logado),
         empresas = db.query(Empresa).filter_by(id=usuario.id_empresa).all()
     return empresas
 
-@router.get("/{slug}", response_model=EmpresaSchema) # TODO: restringir apenas às empresas que o usuário pode ver
-async def obter_empresa(slug: str, db: Session = Depends(obter_sessao)):
-    empresa = (
-        db.query(Empresa)
-        .options(
-            joinedload(Empresa.digisac_client),
-            joinedload(Empresa.evolutionapi_client),
-            joinedload(Empresa.assistentes),
-        )
-        .filter_by(slug=slug)
-        .first()
-    )
-
+@router.get("/{slug}", response_model=EmpresaSchema)
+async def obter_empresa(
+        slug: str,
+        empresa: Empresa = Depends(verificar_permissao_empresa),
+        db: Session = Depends(obter_sessao)
+):
     return empresa
 
 @router.put("/{slug}/informacoes_basicas", response_model=EmpresaSchema)
-async def alterar_informacoes_basicas(slug: str, request: InformacoesBasicas, db: Session = Depends(obter_sessao)):
-    empresa = db.query(Empresa).filter_by(slug=slug).first()
-    if not empresa:
-        raise HTTPException(status_code=404, detail="Empresa não encontrada")
-
+async def alterar_informacoes_basicas(
+        slug: str,
+        request: InformacoesBasicas,
+        empresa: Empresa = Depends(verificar_permissao_empresa),
+        db: Session = Depends(obter_sessao)
+):
     empresa.nome = request.nome
     empresa.fuso_horario = request.fuso_horario
     db.commit()
     return empresa
 
 @router.put("/{slug}/informacoes_assistentes", response_model=EmpresaSchema)
-async def alterar_informacoes_assistentes(slug: str, request: InformacoesAssistentes, db: Session = Depends(obter_sessao)):
-    empresa = db.query(Empresa).filter_by(slug=slug).first()
-    if not empresa:
-        raise HTTPException(status_code=404, detail="Empresa não encontrada")
-
+async def alterar_informacoes_assistentes(
+        slug: str,
+        request: InformacoesAssistentes,
+        empresa: Empresa = Depends(verificar_permissao_empresa),
+        db: Session = Depends(obter_sessao)
+):
     assistente = db.query(Assistente).filter_by(id=request.assistente_padrao, id_empresa=empresa.id, proposito="responder").first()
     if not assistente:
         raise HTTPException(status_code=404, detail="Assistente não encontrado para essa empresa")
@@ -66,11 +79,12 @@ async def alterar_informacoes_assistentes(slug: str, request: InformacoesAssiste
     return empresa
 
 @router.post("/{slug}/informacoes_assistentes/assistente")
-async def adicionar_assistente(slug: str, request: InformacoesAssistente, db: Session = Depends(obter_sessao)):
-    empresa = db.query(Empresa).filter_by(slug=slug).first()
-    if not empresa:
-        raise HTTPException(status_code=404, detail="Empresa não encontrada")
-
+async def adicionar_assistente(
+        slug: str,
+        request: InformacoesAssistente,
+        empresa: Empresa = Depends(verificar_permissao_empresa),
+        db: Session = Depends(obter_sessao)
+):
     assistente = Assistente(
         assistantId=request.assistant_id,
         nome=request.nome,
@@ -86,11 +100,12 @@ async def adicionar_assistente(slug: str, request: InformacoesAssistente, db: Se
     return assistente
 
 @router.put("/{slug}/informacoes_assistentes/assistente", response_model=AssistenteSchema)
-async def alterar_informacoes_assistentes(slug: str, request: InformacoesAssistente, db: Session = Depends(obter_sessao)):
-    empresa = db.query(Empresa).filter_by(slug=slug).first()
-    if not empresa:
-        raise HTTPException(status_code=404, detail="Empresa não encontrada")
-
+async def alterar_assistente(
+        slug: str,
+        request: InformacoesAssistente,
+        empresa: Empresa = Depends(verificar_permissao_empresa),
+        db: Session = Depends(obter_sessao)
+):
     assistente = db.query(Assistente).filter_by(id=request.id, id_empresa=empresa.id).first()
     if not assistente:
         raise HTTPException(status_code=404, detail="Assistente não encontrado para essa empresa")
@@ -103,12 +118,51 @@ async def alterar_informacoes_assistentes(slug: str, request: InformacoesAssiste
     db.commit()
     return assistente
 
-@router.put("/{slug}/informacoes_mensagens", response_model=EmpresaSchema)
-async def alterar_informacoes_mensagens(slug: str, request: InformacoesMensagens, db: Session = Depends(obter_sessao)):
-    empresa = db.query(Empresa).filter_by(slug=slug).first()
-    if not empresa:
-        raise HTTPException(status_code=404, detail="Empresa não encontrada")
+@router.post("/{slug}/informacoes_assistentes/voz")
+async def adicionar_voz(
+        slug: str,
+        request: InformacoesVoz,
+        empresa: Empresa = Depends(verificar_permissao_empresa),
+        db: Session = Depends(obter_sessao)
+):
+    voz = Voz(
+        voiceId=request.voice_id,
+        stability=request.stability,
+        similarity_boost=request.similarity_boost,
+        style=request.style,
+        id_empresa=empresa.id
+    )
 
+    db.add(voz)
+    db.commit()
+    db.refresh(voz)
+    return voz
+
+@router.put("/{slug}/informacoes_assistentes/voz", response_model=VozSchema)
+async def alterar_voz(
+        slug: str,
+        request: InformacoesVoz,
+        empresa: Empresa = Depends(verificar_permissao_empresa),
+        db: Session = Depends(obter_sessao)
+):
+    voz = db.query(Voz).filter_by(id=request.id, id_empresa=empresa.id).first()
+    if not voz:
+        raise HTTPException(status_code=404, detail="Voz não encontrada para essa empresa")
+
+    voz.voiceId = request.voice_id
+    voz.stability = request.stability
+    voz.similarity_boost = request.similarity_boost
+    voz.style = request.style
+    db.commit()
+    return voz
+
+@router.put("/{slug}/informacoes_mensagens", response_model=EmpresaSchema)
+async def alterar_informacoes_mensagens(
+        slug: str,
+        request: InformacoesMensagens,
+        empresa: Empresa = Depends(verificar_permissao_empresa),
+        db: Session = Depends(obter_sessao)
+):
     empresa.message_client_type = request.tipo_cliente
     empresa.recall_timeout_minutes = request.tempo_recall_min
     empresa.final_recall_timeout_minutes = request.tempo_recall_final_min
@@ -119,11 +173,12 @@ async def alterar_informacoes_mensagens(slug: str, request: InformacoesMensagens
     return empresa
 
 @router.put("/{slug}/informacoes_mensagens/digisac", response_model=DigisacClientSchema)
-async def alterar_informacoes_digisac(slug: str, request: InformacoesDigisac, db: Session = Depends(obter_sessao)):
-    empresa = db.query(Empresa).filter_by(slug=slug).first()
-    if not empresa:
-        raise HTTPException(status_code=404, detail="Empresa não encontrada")
-
+async def alterar_informacoes_digisac(
+        slug: str,
+        request: InformacoesDigisac,
+        empresa: Empresa = Depends(verificar_permissao_empresa),
+        db: Session = Depends(obter_sessao)
+):
     digisac_client = db.query(DigisacClient).filter_by(id_empresa=empresa.id).first()
     if not digisac_client:
         raise HTTPException(status_code=404, detail="Cliente do Digisac não encontrado para essa empresa")
@@ -136,11 +191,12 @@ async def alterar_informacoes_digisac(slug: str, request: InformacoesDigisac, db
     return digisac_client
 
 @router.post("/{slug}/informacoes_mensagens/digisac/departamento")
-async def adicionar_departamento(slug: str, request: InformacoesDepartamento, db: Session = Depends(obter_sessao)):
-    empresa = db.query(Empresa).filter_by(slug=slug).first()
-    if not empresa:
-        raise HTTPException(status_code=404, detail="Empresa não encontrada")
-
+async def adicionar_departamento(
+        slug: str,
+        request: InformacoesDepartamento,
+        empresa: Empresa = Depends(verificar_permissao_empresa),
+        db: Session = Depends(obter_sessao)
+):
     digisac_client = db.query(DigisacClient).filter_by(id_empresa=empresa.id).first()
     if not digisac_client:
         raise HTTPException(status_code=404, detail="Cliente do Digisac não encontrado para essa empresa")
@@ -160,11 +216,12 @@ async def adicionar_departamento(slug: str, request: InformacoesDepartamento, db
     return departamento
 
 @router.put("/{slug}/informacoes_mensagens/digisac/departamento", response_model=DepartamentoSchema)
-async def alterar_informacoes_departamento(slug: str, request: InformacoesDepartamento, db: Session = Depends(obter_sessao)):
-    empresa = db.query(Empresa).filter_by(slug=slug).first()
-    if not empresa:
-        raise HTTPException(status_code=404, detail="Empresa não encontrada")
-
+async def alterar_informacoes_departamento(
+        slug: str,
+        request: InformacoesDepartamento,
+        empresa: Empresa = Depends(verificar_permissao_empresa),
+        db: Session = Depends(obter_sessao)
+):
     digisac_client = db.query(DigisacClient).filter_by(id_empresa=empresa.id).first()
     if not digisac_client:
         raise HTTPException(status_code=404, detail="Cliente do Digisac não encontrado para essa empresa")
@@ -182,14 +239,13 @@ async def alterar_informacoes_departamento(slug: str, request: InformacoesDepart
     return departamento
 
 @router.put("/{slug}/informacoes_mensagens/evolutionapi", response_model=EvolutionAPIClientSchema)
-async def alterar_informacoes_digisac(slug: str, request: InformacoesEvolutionAPI, db: Session = Depends(obter_sessao)):
-    empresa = db.query(Empresa).filter_by(slug=slug).first()
-
-    if not empresa:
-        raise HTTPException(status_code=404, detail="Empresa não encontrada")
-
+async def alterar_informacoes_digisac(
+        slug: str,
+        request: InformacoesEvolutionAPI,
+        empresa: Empresa = Depends(verificar_permissao_empresa),
+        db: Session = Depends(obter_sessao)
+):
     evolutionapi_client = db.query(EvolutionAPIClient).filter_by(id_empresa=empresa.id).first()
-
     if not evolutionapi_client:
         raise HTTPException(status_code=404, detail="Cliente do EvolutionAPI não encontrado para essa empresa")
 
@@ -199,11 +255,12 @@ async def alterar_informacoes_digisac(slug: str, request: InformacoesEvolutionAP
     return evolutionapi_client
 
 @router.put("/{slug}/informacoes_agenda", response_model=EmpresaSchema)
-async def alterar_informacoes_agenda(slug: str, request: InformacoesAgenda, db: Session = Depends(obter_sessao)):
-    empresa = db.query(Empresa).filter_by(slug=slug).first()
-    if not empresa:
-        raise HTTPException(status_code=404, detail="Empresa não encontrada")
-
+async def alterar_informacoes_agenda(
+        slug: str,
+        request: InformacoesAgenda,
+        empresa: Empresa = Depends(verificar_permissao_empresa),
+        db: Session = Depends(obter_sessao)
+):
     empresa.agenda_client_type = request.tipo_cliente
     empresa.tipo_cancelamento_evento = request.tipo_cancelamento_evento
     empresa.confirmar_agendamentos_ativo = request.ativar_confirmacao
@@ -211,11 +268,12 @@ async def alterar_informacoes_agenda(slug: str, request: InformacoesAgenda, db: 
     return empresa
 
 @router.post("/{slug}/informacoes_agenda/agenda")
-async def adicionar_agenda(slug: str, request: InformacoesAgendaUnica, db: Session = Depends(obter_sessao)):
-    empresa = db.query(Empresa).filter_by(slug=slug).first()
-    if not empresa:
-        raise HTTPException(status_code=404, detail="Empresa não encontrada")
-
+async def adicionar_agenda(
+        slug: str,
+        request: InformacoesAgendaUnica,
+        empresa: Empresa = Depends(verificar_permissao_empresa),
+        db: Session = Depends(obter_sessao)
+):
     agenda = Agenda(
         endereco=request.endereco,
         atalho=request.atalho,
@@ -228,11 +286,12 @@ async def adicionar_agenda(slug: str, request: InformacoesAgendaUnica, db: Sessi
     return agenda
 
 @router.put("/{slug}/informacoes_agenda/agenda", response_model=AgendaSchema)
-async def alterar_informacoes_agenda(slug: str, request: InformacoesAgendaUnica, db: Session = Depends(obter_sessao)):
-    empresa = db.query(Empresa).filter_by(slug=slug).first()
-    if not empresa:
-        raise HTTPException(status_code=404, detail="Empresa não encontrada")
-
+async def alterar_informacoes_agenda(
+        slug: str,
+        request: InformacoesAgendaUnica,
+        empresa: Empresa = Depends(verificar_permissao_empresa),
+        db: Session = Depends(obter_sessao)
+):
     agenda = db.query(Agenda).filter_by(id=request.id, id_empresa=empresa.id).first()
     if not agenda:
         raise HTTPException(status_code=404, detail="Agenda não encontrada para essa empresa")
@@ -243,11 +302,12 @@ async def alterar_informacoes_agenda(slug: str, request: InformacoesAgendaUnica,
     return agenda
 
 @router.put("/{slug}/informacoes_agenda/outlook", response_model=OutlookClientSchema)
-async def alterar_informacoes_outlook(slug: str, request: InformacoesOutlook, db: Session = Depends(obter_sessao)):
-    empresa = db.query(Empresa).filter_by(slug=slug).first()
-    if not empresa:
-        raise HTTPException(status_code=404, detail="Empresa não encontrada")
-
+async def alterar_informacoes_outlook(
+        slug: str,
+        request: InformacoesOutlook,
+        empresa: Empresa = Depends(verificar_permissao_empresa),
+        db: Session = Depends(obter_sessao)
+):
     outlook_client = db.query(OutlookClient).filter_by(id_empresa=empresa.id).first()
     if not outlook_client:
         raise HTTPException(status_code=404, detail="Cliente do Outlook não encontrado para essa empresa")
@@ -264,11 +324,12 @@ async def alterar_informacoes_outlook(slug: str, request: InformacoesOutlook, db
     return outlook_client
 
 @router.put("/{slug}/informacoes_agenda/googlecalendar", response_model=GoogleCalendarClientSchema)
-async def alterar_informacoes_googlecalendar(slug: str, request: InformacoesGoogleCalendar, db: Session = Depends(obter_sessao)):
-    empresa = db.query(Empresa).filter_by(slug=slug).first()
-    if not empresa:
-        raise HTTPException(status_code=404, detail="Empresa não encontrada")
-
+async def alterar_informacoes_googlecalendar(
+        slug: str,
+        request: InformacoesGoogleCalendar,
+        empresa: Empresa = Depends(verificar_permissao_empresa),
+        db: Session = Depends(obter_sessao)
+):
     googlecalendar_client = db.query(GoogleCalendarClient).filter_by(id_empresa=empresa.id).first()
     if not googlecalendar_client:
         raise HTTPException(status_code=404, detail="Cliente do Google Calendar não encontrado para essa empresa")
@@ -288,21 +349,23 @@ async def alterar_informacoes_googlecalendar(slug: str, request: InformacoesGoog
     return googlecalendar_client
 
 @router.put("/{slug}/informacoes_crm", response_model=EmpresaSchema)
-async def alterar_informacoes_crm(slug: str, request: InformacoesCRM, db: Session = Depends(obter_sessao)):
-    empresa = db.query(Empresa).filter_by(slug=slug).first()
-    if not empresa:
-        raise HTTPException(status_code=404, detail="Empresa não encontrada")
-
+async def alterar_informacoes_crm(
+        slug: str,
+        request: InformacoesCRM,
+        empresa: Empresa = Depends(verificar_permissao_empresa),
+        db: Session = Depends(obter_sessao)
+):
     empresa.crm_client_type = request.tipo_cliente
     db.commit()
     return empresa
 
 @router.put("/{slug}/informacoes_crm/rdstation", response_model=RDStationCRMClientSchema)
-async def alterar_informacoes_rdstation(slug: str, request: InformacoesRDStationCRMClient, db: Session = Depends(obter_sessao)):
-    empresa = db.query(Empresa).filter_by(slug=slug).first()
-    if not empresa:
-        raise HTTPException(status_code=404, detail="Empresa não encontrada")
-
+async def alterar_informacoes_rdstation(
+        slug: str,
+        request: InformacoesRDStationCRMClient,
+        empresa: Empresa = Depends(verificar_permissao_empresa),
+        db: Session = Depends(obter_sessao)
+):
     rdstationcrm_client = db.query(RDStationCRMClient).filter_by(id_empresa=empresa.id).first()
     if not rdstationcrm_client:
         raise HTTPException(status_code=404, detail="Cliente do RD Station CRM não encontrado para essa empresa")
@@ -313,11 +376,12 @@ async def alterar_informacoes_rdstation(slug: str, request: InformacoesRDStation
     return rdstationcrm_client
 
 @router.post("/{slug}/informacoes_crm/rdstation/estagio")
-async def adicionar_estagio(slug: str, request: InformacoesRDStationDealStage, db: Session = Depends(obter_sessao)):
-    empresa = db.query(Empresa).filter_by(slug=slug).first()
-    if not empresa:
-        raise HTTPException(status_code=404, detail="Empresa não encontrada")
-
+async def adicionar_estagio(
+        slug: str,
+        request: InformacoesRDStationDealStage,
+        empresa: Empresa = Depends(verificar_permissao_empresa),
+        db: Session = Depends(obter_sessao)
+):
     rdstationcrm_client = db.query(RDStationCRMClient).filter_by(id_empresa=empresa.id).first()
     if not rdstationcrm_client:
         raise HTTPException(status_code=404, detail="Cliente do RD Station CRM não encontrado para essa empresa")
@@ -336,11 +400,12 @@ async def adicionar_estagio(slug: str, request: InformacoesRDStationDealStage, d
     return estagio
 
 @router.put("/{slug}/informacoes_crm/rdstation/estagio", response_model=RDStationCRMDealStageSchema)
-async def alterar_informacoes_estagio(slug: str, request: InformacoesRDStationDealStage, db: Session = Depends(obter_sessao)):
-    empresa = db.query(Empresa).filter_by(slug=slug).first()
-    if not empresa:
-        raise HTTPException(status_code=404, detail="Empresa não encontrada")
-
+async def alterar_informacoes_estagio(
+        slug: str,
+        request: InformacoesRDStationDealStage,
+        empresa: Empresa = Depends(verificar_permissao_empresa),
+        db: Session = Depends(obter_sessao)
+):
     rdstationcrm_client = db.query(RDStationCRMClient).filter_by(id_empresa=empresa.id).first()
     if not rdstationcrm_client:
         raise HTTPException(status_code=404, detail="Cliente do RD Station CRM não encontrado para essa empresa")
@@ -357,11 +422,12 @@ async def alterar_informacoes_estagio(slug: str, request: InformacoesRDStationDe
     return deal_stage
 
 @router.put("/{slug}/informacoes_financeiras", response_model=EmpresaSchema)
-async def alterar_informacoes_financeiras(slug: str, request: InformacoesFinanceiras, db: Session = Depends(obter_sessao)):
-    empresa = db.query(Empresa).filter_by(slug=slug).first()
-    if not empresa:
-        raise HTTPException(status_code=404, detail="Empresa não encontrada")
-
+async def alterar_informacoes_financeiras(
+        slug: str,
+        request: InformacoesFinanceiras,
+        empresa: Empresa = Depends(verificar_permissao_empresa),
+        db: Session = Depends(obter_sessao)
+):
     empresa.financial_client_type = request.tipo_cliente
     empresa.lembrar_vencimentos_ativo = request.lembrar_vencimentos
     empresa.cobrar_inadimplentes_ativo = request.cobrar_inadimplentes
@@ -369,11 +435,12 @@ async def alterar_informacoes_financeiras(slug: str, request: InformacoesFinance
     return empresa
 
 @router.put("/{slug}/informacoes_financeiras/asaas", response_model=AsaasClientSchema)
-async def alterar_informacoes_asaas(slug: str, request: InformacoesAsaas, db: Session = Depends(obter_sessao)):
-    empresa = db.query(Empresa).filter_by(slug=slug).first()
-    if not empresa:
-        raise HTTPException(status_code=404, detail="Empresa não encontrada")
-
+async def alterar_informacoes_asaas(
+        slug: str,
+        request: InformacoesAsaas,
+        empresa: Empresa = Depends(verificar_permissao_empresa),
+        db: Session = Depends(obter_sessao)
+):
     asaas_client = db.query(AsaasClient).filter_by(id_empresa=empresa.id).first()
     if not asaas_client:
         raise HTTPException(status_code=404, detail="Cliente do Asaas não encontrado para essa empresa")

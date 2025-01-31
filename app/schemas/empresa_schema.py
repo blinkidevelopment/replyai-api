@@ -116,6 +116,7 @@ class EmpresaSchema(BaseModel):
     tipo_cancelamento_evento: Optional[str]
     mensagem_erro_ia: Optional[str]
     assistentes: List[AssistenteSchema]
+    vozes: List[VozSchema]
     assistentePadrao: Optional[int]
     agenda: Optional[List[AgendaSchema]]
     digisac_client: Optional[List[DigisacClientSchema]]
@@ -124,6 +125,13 @@ class EmpresaSchema(BaseModel):
     googlecalendar_client: Optional[List[GoogleCalendarClientSchema]]
     rdstationcrm_client: Optional[List[RDStationCRMClientSchema]]
     asaas_client: Optional[List[AsaasClientSchema]]
+
+    class Config:
+        orm_mode = True
+
+class EmpresaMinSchema(BaseModel):
+    slug: str
+    nome: str
 
     class Config:
         orm_mode = True

@@ -55,8 +55,10 @@ class Voz(Base):
     stability = Column(Float)
     similarity_boost = Column(Float)
     style = Column(Float)
+    id_empresa = Column(Integer, ForeignKey("empresas.id"))
 
     assistente = relationship("Assistente", backref="voz")
+    empresa = relationship("Empresa", backref="vozes")
 
 
 class Empresa(Base):

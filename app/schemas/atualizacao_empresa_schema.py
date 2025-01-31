@@ -10,12 +10,19 @@ class InformacoesAssistentes(BaseModel):
     assistente_padrao: int
 
 class InformacoesAssistente(BaseModel):
-    id: Optional[int]
+    id: Optional[int] = None
     nome: str
     assistant_id: str
     proposito: str
     atalho: str
     voz: int
+
+class InformacoesVoz(BaseModel):
+    id: Optional[int] = None
+    voice_id: str
+    stability: float
+    similarity_boost: float
+    style: float
 
 class InformacoesMensagens(BaseModel):
     tipo_cliente: Literal["digisac", "evolution"]
@@ -99,11 +106,16 @@ class InformacoesRDStationCRMClient(BaseModel):
     id_fonte_padrao: str
 
 class InformacoesRDStationDealStage(BaseModel):
-    id: Optional[int]
+    id: Optional[int] = None
     atalho: str
     deal_stage_id: str
-    user_id: str
+    user_id: Optional[str] = None
     estagio_inicial: bool
+
+    @field_validator("user_id", mode="before")
+    @classmethod
+    def string_vazia(cls, valor):
+        return valor if valor.strip() else None
 
 class InformacoesFinanceiras(BaseModel):
     tipo_cliente: Optional[Literal["asaas"]]
