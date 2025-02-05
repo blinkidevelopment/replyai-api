@@ -102,14 +102,14 @@ class EmpresaSchema(BaseModel):
     slug: str
     token: str
     fuso_horario: str
-    message_client_type: str
+    message_client_type: Optional[str]
     agenda_client_type: Optional[str]
     crm_client_type: Optional[str]
     financial_client_type: Optional[str]
     recall_timeout_minutes: Optional[int]
     final_recall_timeout_minutes: Optional[int]
     recall_quant: Optional[int]
-    recall_ativo: bool
+    recall_ativo: Optional[bool]
     confirmar_agendamentos_ativo: Optional[bool]
     lembrar_vencimentos_ativo: Optional[bool]
     cobrar_inadimplentes_ativo: Optional[bool]
@@ -120,7 +120,7 @@ class EmpresaSchema(BaseModel):
     assistentePadrao: Optional[int]
     agenda: Optional[List[AgendaSchema]]
     digisac_client: Optional[List[DigisacClientSchema]]
-    evolutionapi_client: Optional[List[EvolutionAPIClientSchema]]
+    evolutionapi_client: Optional[List[EvolutionAPIClientSchema]] = None
     outlook_client: Optional[List[OutlookClientSchema]]
     googlecalendar_client: Optional[List[GoogleCalendarClientSchema]]
     rdstationcrm_client: Optional[List[RDStationCRMClientSchema]]

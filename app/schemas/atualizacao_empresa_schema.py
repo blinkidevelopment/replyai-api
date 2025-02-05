@@ -2,12 +2,25 @@ from pydantic import BaseModel, field_validator, Field
 from typing import List, Optional, Literal
 
 
+class InformacoesCriarEmpresa(BaseModel):
+    nome: str
+    slug: str
+    fuso_horario: str
+    openai_api_key: str
+
 class InformacoesBasicas(BaseModel):
     nome: str
     fuso_horario: str
 
 class InformacoesAssistentes(BaseModel):
-    assistente_padrao: int
+    assistente_padrao: Optional[int] = None
+
+    @field_validator("assistente_padrao", mode="before")
+    @classmethod
+    def int_vazio(cls, valor):
+        if isinstance(valor, str) and valor.strip() == "":
+            return None
+        return valor
 
 class InformacoesAssistente(BaseModel):
     id: Optional[int] = None
@@ -30,7 +43,12 @@ class InformacoesMensagens(BaseModel):
     tempo_recall_final_min: int
     quant_recalls: int
     ativar_recall: bool
-    mensagem_erro_ia: str = Field(..., min_length=1)
+    mensagem_erro_ia: Optional[str] = None
+
+    @field_validator("mensagem_erro_ia", mode="before")
+    @classmethod
+    def string_vazia(cls, valor):
+        return valor or None
 
 class InformacoesEvolutionAPI(BaseModel):
     api_key: str

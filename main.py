@@ -1,10 +1,8 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI
 
 from app.routers import resposta, trabalho, empresa, usuario
 from fastapi.middleware.cors import CORSMiddleware
 import os
-
-from app.routers.trabalho import verificar_chave_secreta
 
 
 app = FastAPI()

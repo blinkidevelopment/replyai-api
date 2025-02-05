@@ -1,3 +1,4 @@
+import secrets
 from typing import List
 
 from fastapi import APIRouter, HTTPException
@@ -11,7 +12,8 @@ from app.routers.usuario import obter_usuario_logado
 from app.schemas.atualizacao_empresa_schema import InformacoesBasicas, InformacoesMensagens, InformacoesDigisac, \
     InformacoesEvolutionAPI, InformacoesDepartamento, InformacoesAgenda, InformacoesOutlook, InformacoesGoogleCalendar, \
     InformacoesAssistentes, InformacoesCRM, InformacoesRDStationCRMClient, InformacoesRDStationDealStage, \
-    InformacoesFinanceiras, InformacoesAsaas, InformacoesAssistente, InformacoesAgendaUnica, InformacoesVoz
+    InformacoesFinanceiras, InformacoesAsaas, InformacoesAssistente, InformacoesAgendaUnica, InformacoesVoz, \
+    InformacoesCriarEmpresa
 from app.schemas.empresa_schema import EmpresaSchema, AgendaSchema, DepartamentoSchema, AssistenteSchema, \
     DigisacClientSchema, EvolutionAPIClientSchema, OutlookClientSchema, GoogleCalendarClientSchema, \
     RDStationCRMClientSchema, RDStationCRMDealStageSchema, AsaasClientSchema, VozSchema, EmpresaMinSchema
@@ -43,6 +45,29 @@ async def obter_todas_empresas(usuario: Usuario = Depends(obter_usuario_logado),
         empresas = db.query(Empresa).filter_by(id=usuario.id_empresa).all()
     return empresas
 
+@router.post("/")
+async def criar_empresa(
+        request: InformacoesCriarEmpresa,
+        usuario: Usuario = Depends(obter_usuario_logado),
+        db: Session = Depends(obter_sessao)
+):
+    if not usuario.id_empresa:
+        empresa = db.query(Empresa).filter_by(slug=request.slug).first()
+        if not empresa:
+            token = secrets.token_hex(32)
+            empresa = Empresa(
+                nome=request.nome,
+                slug=request.slug,
+                token=token,
+                fuso_horario=request.fuso_horario,
+                openai_api_key=request.openai_api_key
+            )
+            db.add(empresa)
+            db.commit()
+            db.refresh(empresa)
+            return empresa
+    return None
+
 @router.get("/{slug}", response_model=EmpresaSchema)
 async def obter_empresa(
         slug: str,
@@ -70,12 +95,13 @@ async def alterar_informacoes_assistentes(
         empresa: Empresa = Depends(verificar_permissao_empresa),
         db: Session = Depends(obter_sessao)
 ):
-    assistente = db.query(Assistente).filter_by(id=request.assistente_padrao, id_empresa=empresa.id, proposito="responder").first()
-    if not assistente:
-        raise HTTPException(status_code=404, detail="Assistente não encontrado para essa empresa")
+    if request.assistente_padrao:
+        assistente = db.query(Assistente).filter_by(id=request.assistente_padrao, id_empresa=empresa.id, proposito="responder").first()
+        if not assistente:
+            raise HTTPException(status_code=404, detail="Assistente não encontrado para essa empresa")
 
-    empresa.assistentePadrao = request.assistente_padrao
-    db.commit()
+        empresa.assistentePadrao = request.assistente_padrao
+        db.commit()
     return empresa
 
 @router.post("/{slug}/informacoes_assistentes/assistente")
@@ -172,6 +198,30 @@ async def alterar_informacoes_mensagens(
     db.commit()
     return empresa
 
+@router.post("/{slug}/informacoes_mensagens/digisac")
+async def adicionar_cliente_digisac(
+        slug: str,
+        request: InformacoesDigisac,
+        empresa: Empresa = Depends(verificar_permissao_empresa),
+        db: Session = Depends(obter_sessao)
+):
+    digisac_client = db.query(DigisacClient).filter_by(id_empresa=empresa.id).first()
+    if digisac_client:
+        raise HTTPException(status_code=404, detail="Essa empresa já possui um cliente do Digisac")
+
+    digisac_client = DigisacClient(
+        digisacSlug=request.slug,
+        service_id=request.service_id,
+        digisacToken=request.token,
+        digisacDefaultUser=request.user_id,
+        id_empresa=empresa.id
+    )
+
+    db.add(digisac_client)
+    db.commit()
+    db.refresh(digisac_client)
+    return digisac_client
+
 @router.put("/{slug}/informacoes_mensagens/digisac", response_model=DigisacClientSchema)
 async def alterar_informacoes_digisac(
         slug: str,
@@ -238,8 +288,30 @@ async def alterar_informacoes_departamento(
     db.commit()
     return departamento
 
+@router.post("/{slug}/informacoes_mensagens/evolutionapi")
+async def adicionar_cliente_evolutionapi(
+        slug: str,
+        request: InformacoesEvolutionAPI,
+        empresa: Empresa = Depends(verificar_permissao_empresa),
+        db: Session = Depends(obter_sessao)
+):
+    evolutionapi_client = db.query(EvolutionAPIClient).filter_by(id_empresa=empresa.id).first()
+    if evolutionapi_client:
+        raise HTTPException(status_code=404, detail="Essa empresa já possui um cliente do EvolutionAPI")
+
+    evolutionapi_client = EvolutionAPIClient(
+        apiKey=request.api_key,
+        instanceName=request.instance_name,
+        id_empresa=empresa.id
+    )
+
+    db.add(evolutionapi_client)
+    db.commit()
+    db.refresh(evolutionapi_client)
+    return evolutionapi_client
+
 @router.put("/{slug}/informacoes_mensagens/evolutionapi", response_model=EvolutionAPIClientSchema)
-async def alterar_informacoes_digisac(
+async def alterar_informacoes_evolutionapi(
         slug: str,
         request: InformacoesEvolutionAPI,
         empresa: Empresa = Depends(verificar_permissao_empresa),
@@ -301,6 +373,34 @@ async def alterar_informacoes_agenda(
     db.commit()
     return agenda
 
+@router.post("/{slug}/informacoes_agenda/outlook")
+async def adicionar_cliente_outlook(
+        slug: str,
+        request: InformacoesOutlook,
+        empresa: Empresa = Depends(verificar_permissao_empresa),
+        db: Session = Depends(obter_sessao)
+):
+    outlook_client = db.query(OutlookClient).filter_by(id_empresa=empresa.id).first()
+    if outlook_client:
+        raise HTTPException(status_code=404, detail="Essa empresa já possui um cliente do Outlook")
+
+    outlook_client = OutlookClient(
+        clientId=request.client_id,
+        tenantId=request.tenant_id,
+        clientSecret=request.client_secret,
+        duracaoEvento=request.duracao_evento,
+        usuarioPadrao=request.usuario_padrao,
+        horaInicioAgenda=request.hora_inicial,
+        horaFinalAgenda=request.hora_final,
+        timeZone=request.fuso_horario,
+        id_empresa=empresa.id
+    )
+
+    db.add(outlook_client)
+    db.commit()
+    db.refresh(outlook_client)
+    return outlook_client
+
 @router.put("/{slug}/informacoes_agenda/outlook", response_model=OutlookClientSchema)
 async def alterar_informacoes_outlook(
         slug: str,
@@ -322,6 +422,37 @@ async def alterar_informacoes_outlook(
     outlook_client.timeZone = request.fuso_horario
     db.commit()
     return outlook_client
+
+@router.post("/{slug}/informacoes_agenda/googlecalendar")
+async def alterar_informacoes_googlecalendar(
+        slug: str,
+        request: InformacoesGoogleCalendar,
+        empresa: Empresa = Depends(verificar_permissao_empresa),
+        db: Session = Depends(obter_sessao)
+):
+    googlecalendar_client = db.query(GoogleCalendarClient).filter_by(id_empresa=empresa.id).first()
+    if googlecalendar_client:
+        raise HTTPException(status_code=404, detail="Essa empresa já possui um cliente do Google Calendar")
+
+    googlecalendar_client = GoogleCalendarClient(
+        project_id=request.project_id,
+        private_key_id=request.private_key_id,
+        private_key=request.private_key,
+        client_email=request.client_email,
+        client_id=request.client_id,
+        client_x509_cert_url=request.client_x509_cert_url,
+        api_key=request.api_key,
+        duracao_evento=request.duracao_evento,
+        hora_inicio_agenda=request.hora_inicial,
+        hora_final_agenda=request.hora_final,
+        timezone=request.fuso_horario,
+        id_empresa=empresa.id
+    )
+
+    db.add(googlecalendar_client)
+    db.commit()
+    db.refresh(googlecalendar_client)
+    return googlecalendar_client
 
 @router.put("/{slug}/informacoes_agenda/googlecalendar", response_model=GoogleCalendarClientSchema)
 async def alterar_informacoes_googlecalendar(
@@ -358,6 +489,28 @@ async def alterar_informacoes_crm(
     empresa.crm_client_type = request.tipo_cliente
     db.commit()
     return empresa
+
+@router.post("/{slug}/informacoes_crm/rdstation")
+async def adicionar_cliente_rdstation(
+        slug: str,
+        request: InformacoesRDStationCRMClient,
+        empresa: Empresa = Depends(verificar_permissao_empresa),
+        db: Session = Depends(obter_sessao)
+):
+    rdstationcrm_client = db.query(RDStationCRMClient).filter_by(id_empresa=empresa.id).first()
+    if rdstationcrm_client:
+        raise HTTPException(status_code=404, detail="Essa empresa já possui um cliente do RD Station CRM")
+
+    rdstationcrm_client = RDStationCRMClient(
+        token=request.token,
+        id_fonte_padrao=request.id_fonte_padrao,
+        id_empresa=empresa.id
+    )
+
+    db.add(rdstationcrm_client)
+    db.commit()
+    db.refresh(rdstationcrm_client)
+    return rdstationcrm_client
 
 @router.put("/{slug}/informacoes_crm/rdstation", response_model=RDStationCRMClientSchema)
 async def alterar_informacoes_rdstation(
@@ -433,6 +586,28 @@ async def alterar_informacoes_financeiras(
     empresa.cobrar_inadimplentes_ativo = request.cobrar_inadimplentes
     db.commit()
     return empresa
+
+@router.post("/{slug}/informacoes_financeiras/asaas")
+async def adicionar_cliente_asaas(
+        slug: str,
+        request: InformacoesAsaas,
+        empresa: Empresa = Depends(verificar_permissao_empresa),
+        db: Session = Depends(obter_sessao)
+):
+    asaas_client = db.query(AsaasClient).filter_by(id_empresa=empresa.id).first()
+    if asaas_client:
+        raise HTTPException(status_code=404, detail="Essa empresa já possui um cliente do Asaas")
+
+    asaas_client = AsaasClient(
+        token=request.token,
+        rotulo=request.rotulo,
+        client_number=request.numero_cliente
+    )
+
+    db.add(asaas_client)
+    db.commit()
+    db.refresh(asaas_client)
+    return asaas_client
 
 @router.put("/{slug}/informacoes_financeiras/asaas", response_model=AsaasClientSchema)
 async def alterar_informacoes_asaas(
