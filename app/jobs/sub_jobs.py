@@ -67,7 +67,7 @@ async def enviar_confirmacao_consulta(data: str, data_atual: str, empresa: Empre
                             contato.appointmentConfirmation = True
                             await atualizar_assistente_atual_contato(contato, assistente_db_id, db)
                         if isinstance(message_client, Digisac):
-                            departamento = await obter_departamento(message_client, None, True, db)
+                            departamento = await obter_departamento(empresa, None, True, db)
                             if departamento:
                                 await transferir_contato(message_client, contato, departamento)
                         await direcionar(resposta_extracao.resposta_confirmacao, False, message_client, None, None, empresa, contato, assistente, db)

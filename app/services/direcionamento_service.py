@@ -30,7 +30,7 @@ async def direcionar(
             await enviar_mensagem(resposta.mensagem, audio, resposta.midia, contato, empresa, message_client, assistente, db)
         case "T": # transferir o contato
             if isinstance(message_client, Digisac):
-                departamento = await obter_departamento(message_client, resposta.departamento, False, db)
+                departamento = await obter_departamento(empresa, resposta.departamento, False, db)
                 if departamento:
                     await enviar_mensagem(resposta.mensagem, audio, resposta.midia, contato, empresa, message_client, assistente, db)
                     await transferir_contato(message_client, contato, departamento)
