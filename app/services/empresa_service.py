@@ -1,6 +1,8 @@
+import json
+
 from sqlalchemy.orm import Session
 
-from app.db.models import Empresa, Assistente, Agenda, DigisacClient, Departamento
+from app.db.models import Empresa, Assistente, Agenda, DigisacClient, Departamento, Colaborador
 from app.services.agendamento_service import criar_agenda_client
 from app.services.crm_service import criar_crm_client
 from app.services.mensagem_service import criar_message_client
@@ -48,4 +50,17 @@ async def obter_departamento(message_client: Digisac, atalho: str | None, dpt_co
             departamento = db.query(Departamento).filter_by(atalho=atalho, id_digisac_client=digisac_client_db.id).first()
         if departamento is not None:
             return departamento
+    return None
+
+
+async def obter_colaboradores(empresa: Empresa, db: Session):
+    if empresa:
+        colaboradores = db.query(Colaborador).filter_by(id_empresa=empresa.id).all()
+        data = {
+            "colaboradores": [
+                {"nome": colab.nome, "apelido": colab.apelido, "departamento": colab.departamento}
+                for colab in colaboradores
+            ]
+        }
+        return json.dumps(data, ensure_ascii=False, indent=4)
     return None

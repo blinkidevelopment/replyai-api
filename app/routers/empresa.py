@@ -7,16 +7,17 @@ from sqlalchemy.orm import Session
 
 from app.db.database import obter_sessao
 from app.db.models import Empresa, Assistente, DigisacClient, EvolutionAPIClient, Departamento, OutlookClient, \
-    GoogleCalendarClient, RDStationCRMClient, RDStationCRMDealStage, AsaasClient, Agenda, Usuario, Voz
+    GoogleCalendarClient, RDStationCRMClient, RDStationCRMDealStage, AsaasClient, Agenda, Usuario, Voz, Colaborador
 from app.routers.usuario import obter_usuario_logado
 from app.schemas.atualizacao_empresa_schema import InformacoesBasicas, InformacoesMensagens, InformacoesDigisac, \
     InformacoesEvolutionAPI, InformacoesDepartamento, InformacoesAgenda, InformacoesOutlook, InformacoesGoogleCalendar, \
     InformacoesAssistentes, InformacoesCRM, InformacoesRDStationCRMClient, InformacoesRDStationDealStage, \
     InformacoesFinanceiras, InformacoesAsaas, InformacoesAssistente, InformacoesAgendaUnica, InformacoesVoz, \
-    InformacoesCriarEmpresa
+    InformacoesCriarEmpresa, InformacoesColaborador
 from app.schemas.empresa_schema import EmpresaSchema, AgendaSchema, DepartamentoSchema, AssistenteSchema, \
     DigisacClientSchema, EvolutionAPIClientSchema, OutlookClientSchema, GoogleCalendarClientSchema, \
-    RDStationCRMClientSchema, RDStationCRMDealStageSchema, AsaasClientSchema, VozSchema, EmpresaMinSchema
+    RDStationCRMClientSchema, RDStationCRMDealStageSchema, AsaasClientSchema, VozSchema, EmpresaMinSchema, \
+    ColaboradorSchema
 
 
 async def verificar_permissao_empresa(
@@ -87,6 +88,55 @@ async def alterar_informacoes_basicas(
     empresa.fuso_horario = request.fuso_horario
     db.commit()
     return empresa
+
+@router.post("/{slug}/informacoes_basicas/colaborador")
+async def adicionar_colaborador(
+        slug: str,
+        request: InformacoesColaborador,
+        empresa: Empresa = Depends(verificar_permissao_empresa),
+        db: Session = Depends(obter_sessao)
+):
+    colaborador = Colaborador(
+        nome=request.nome,
+        apelido=request.apelido,
+        departamento=request.departamento,
+        id_empresa=empresa.id
+    )
+
+    db.add(colaborador)
+    db.commit()
+    db.refresh(colaborador)
+    return colaborador
+
+@router.put("/{slug}/informacoes_basicas/colaborador", response_model=ColaboradorSchema)
+async def alterar_colaborador(
+        slug: str,
+        request: InformacoesColaborador,
+        empresa: Empresa = Depends(verificar_permissao_empresa),
+        db: Session = Depends(obter_sessao)
+):
+    colaborador = db.query(Colaborador).filter_by(id=request.id, id_empresa=empresa.id).first()
+    if not colaborador:
+        raise HTTPException(status_code=404, detail="Colaborador não encontrado para essa empresa")
+
+    colaborador.nome = request.nome
+    colaborador.apelido = request.apelido
+    colaborador.departamento = request.departamento
+    db.commit()
+    return colaborador
+
+@router.delete("/{slug}/informacoes_basicas/colaborador/{id}")
+async def remover_colaborador(
+        slug: str,
+        id: int,
+        empresa: Empresa = Depends(verificar_permissao_empresa),
+        db: Session = Depends(obter_sessao)
+):
+    colaborador = db.query(Colaborador).filter_by(id=id, id_empresa=empresa.id).first()
+    if colaborador:
+        db.delete(colaborador)
+        return True
+    return False
 
 @router.put("/{slug}/informacoes_assistentes", response_model=EmpresaSchema)
 async def alterar_informacoes_assistentes(

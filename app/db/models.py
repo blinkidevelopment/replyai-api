@@ -114,6 +114,18 @@ class Midia(Base):
     empresa = relationship("Empresa", backref="midias")
 
 
+class Colaborador(Base):
+    __tablename__ = "colaboradores"
+
+    id = Column(Integer, primary_key=True, index=True)
+    nome = Column(String)
+    apelido = Column(String)
+    departamento = Column(String)
+    id_empresa = Column(Integer, ForeignKey("empresas.id"))
+
+    empresa = relationship("Empresa", backref="colaboradores")
+
+
 class EvolutionAPIClient(Base):
     __tablename__ = "evolutionapi_clients"
 

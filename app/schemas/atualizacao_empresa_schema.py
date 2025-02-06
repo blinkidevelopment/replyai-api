@@ -12,6 +12,24 @@ class InformacoesBasicas(BaseModel):
     nome: str
     fuso_horario: str
 
+class InformacoesColaborador(BaseModel):
+    id: Optional[int] = None
+    nome: str
+    apelido: Optional[str] = None
+    departamento: Optional[str] = None
+
+    @field_validator("apelido", "departamento", mode="before")
+    @classmethod
+    def string_vazia(cls, valor):
+        return valor or None
+
+    @field_validator("id", mode="before")
+    @classmethod
+    def int_vazio(cls, valor):
+        if isinstance(valor, str) and valor.strip() == "":
+            return None
+        return valor
+
 class InformacoesAssistentes(BaseModel):
     assistente_padrao: Optional[int] = None
 

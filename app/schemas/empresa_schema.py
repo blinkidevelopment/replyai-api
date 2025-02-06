@@ -96,6 +96,15 @@ class AssistenteSchema(BaseModel):
     class Config:
         orm_mode = True
 
+class ColaboradorSchema(BaseModel):
+    id: int
+    nome: str
+    apelido: str
+    departamento: str
+
+    class Config:
+        orm_mode = True
+
 class EmpresaSchema(BaseModel):
     id: int
     nome: str
@@ -116,6 +125,7 @@ class EmpresaSchema(BaseModel):
     tipo_cancelamento_evento: Optional[str]
     mensagem_erro_ia: Optional[str]
     assistentes: List[AssistenteSchema]
+    colaboradores: List[ColaboradorSchema]
     vozes: List[VozSchema]
     assistentePadrao: Optional[int]
     agenda: Optional[List[AgendaSchema]]

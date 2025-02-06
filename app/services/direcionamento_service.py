@@ -41,7 +41,7 @@ async def direcionar(
             await enviar_mensagem(resposta.mensagem, audio, resposta.midia, contato, empresa, message_client, assistente, db)
             assistente, id_assistente_db = await obter_assistente(empresa, None, resposta.assistente, db)
             if assistente:
-                resposta_assistente = await executar_thread(None, None, contato, None, assistente, db)
+                resposta_assistente = await executar_thread(None, None, contato, None, None, assistente, db)
                 await atualizar_assistente_atual_contato(contato, id_assistente_db, db)
                 await enviar_mensagem(resposta_assistente.mensagem, audio, resposta.midia, contato, empresa, message_client, assistente, db)
         case "AG": # checar agenda
