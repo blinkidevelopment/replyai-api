@@ -28,7 +28,8 @@ async def obter_criar_contato(request: DigisacRequest | EvolutionAPIRequest | No
     contato = db.query(Contato).filter_by(contactId=contact_id, id_empresa=empresa.id).first()
 
     if contato is None:
-        dados_contato = message_client.obter_dados_contato(request=request)
+        if request is not None:
+            dados_contato = message_client.obter_dados_contato(request=request)
 
         id_negociacao = None
         if crm_client:
@@ -55,7 +56,7 @@ async def obter_criar_contato(request: DigisacRequest | EvolutionAPIRequest | No
         assistente_db = db.query(Assistente).filter_by(id=empresa.assistentePadrao, id_empresa=empresa.id).first()
         await atualizar_assistente_atual_contato(contato, assistente_db.id, db)
     assistente = Assistant(nome=assistente_db.nome, id=assistente_db.assistantId, api_key=empresa.openai_api_key)
-    if not contato.threadId and dados_contato is None:
+    if not contato.threadId and dados_contato is None and request is not None:
         dados_contato = message_client.obter_dados_contato(request=request)
 
     return contato, assistente, dados_contato

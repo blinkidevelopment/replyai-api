@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional
 
 
@@ -58,8 +58,48 @@ class Payment(BaseModel):
     custody: Optional[str]
     refunds: Optional[str]
 
+class Taxes(BaseModel):
+    retainIss: bool = Field(..., alias="retainIss")
+    iss: float
+    cofins: float
+    csll: float
+    inss: float
+    ir: float
+    pis: float
+
+class Invoice(BaseModel):
+    object: str
+    id: str
+    status: str
+    customer: str
+    type: str
+    statusDescription: Optional[str] = None
+    serviceDescription: str
+    pdfUrl: Optional[str] = None
+    xmlUrl: Optional[str] = None
+    rpsSerie: Optional[str] = None
+    rpsNumber: Optional[str] = None
+    number: Optional[str] = None
+    validationCode: Optional[str] = None
+    value: float
+    deductions: float
+    effectiveDate: str
+    observations: str
+    estimatedTaxesDescription: Optional[str] = ""
+    payment: str
+    installment: Optional[str] = None
+    taxes: Taxes
+    municipalServiceCode: str
+    municipalServiceName: str
+
 class AsaasPaymentRequest(BaseModel):
     id: str
     event: str
     dateCreated: str
     payment: Payment
+
+class AsaasInvoiceRequest(BaseModel):
+    id: str
+    event: str
+    dateCreated: str
+    invoice: Invoice

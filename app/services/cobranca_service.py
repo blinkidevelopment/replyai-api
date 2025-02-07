@@ -46,8 +46,8 @@ def criar_financial_client(empresa: Empresa, db: Session, client_number: int | N
     clients = []
 
     if empresa.financial_client_type == "asaas":
-        if client_number:
-            asaas_client_db = db.query(AsaasClient).filter_by(id_empresa=empresa.id, client_number=client_number).first()
+        if client_number is not None:
+            asaas_client_db = db.query(AsaasClient).filter_by(id_empresa=empresa.id, client_number=client_number).all()
         else:
             asaas_client_db = db.query(AsaasClient).filter_by(id_empresa=empresa.id).all()
 
@@ -57,7 +57,7 @@ def criar_financial_client(empresa: Empresa, db: Session, client_number: int | N
             )
 
     if clients:
-        if not client_number:
-            return clients
-        else:
+        if client_number is not None:
             return clients[0]
+        else:
+            return clients

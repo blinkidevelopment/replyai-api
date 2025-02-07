@@ -113,3 +113,28 @@ async def processar_cobranca(acao: str, cobranca: dict, data_atual: str, empresa
             await direcionar(resposta_vencimento.resposta, False, message_client, None, None, empresa, contato,
                              assistente, db)
             await atualizar_thread_contato(contato, thread_id, db)
+
+
+async def processar_nf(acao: str, nota: dict, data_atual: str, empresa: Empresa, message_client: MessageClient, financial_client: FinancialClient, db: Session):
+    cliente = financial_client.obter_cliente(id_cliente=nota.get("customer", ""))
+    if cliente:
+        telefone = cliente.get("phone", "")
+        nome = cliente.get("name", "")
+        url_nota = nota.get("pdfUrl", "")
+        if url_nota:
+            documento = message_client.baixar_arquivo(url_nota)
+            if documento:
+                resposta_vencimento, thread_id = await extrair_dados_cobranca(acao, nome, telefone, data_atual, "",
+                                                                              "", empresa, db)
+                if resposta_vencimento:
+                    assistente, assistente_db_id = await obter_assistente(empresa, "cobrar", None, db)
+                    id_contato = message_client.obter_id_contato(resposta_vencimento.telefone, nome)
+                    contato = (await obter_criar_contato(None, id_contato, empresa, message_client, None, db))[0]
+                    await atualizar_assistente_atual_contato(contato, assistente_db_id, db)
+                    await direcionar(resposta_vencimento.resposta, False, message_client, None, None, empresa, contato,
+                                     assistente, db)
+
+                    mediatype = "application/pdf" if isinstance(message_client, Digisac) else "document"
+                    message_client.enviar_mensagem(mensagem="", base64=documento, mediatype=mediatype, nome_arquivo="nota_fiscal.pdf", contact_id=contato.contactId, userId=None, origin="bot", nome_assistente=assistente.nome)
+
+                    await atualizar_thread_contato(contato, thread_id, db)
