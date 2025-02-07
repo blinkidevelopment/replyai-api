@@ -7,17 +7,18 @@ from sqlalchemy.orm import Session
 
 from app.db.database import obter_sessao
 from app.db.models import Empresa, Assistente, DigisacClient, EvolutionAPIClient, Departamento, OutlookClient, \
-    GoogleCalendarClient, RDStationCRMClient, RDStationCRMDealStage, AsaasClient, Agenda, Usuario, Voz, Colaborador
+    GoogleCalendarClient, RDStationCRMClient, RDStationCRMDealStage, AsaasClient, Agenda, Usuario, Voz, Colaborador, \
+    Midia
 from app.routers.usuario import obter_usuario_logado
 from app.schemas.atualizacao_empresa_schema import InformacoesBasicas, InformacoesMensagens, InformacoesDigisac, \
     InformacoesEvolutionAPI, InformacoesDepartamento, InformacoesAgenda, InformacoesOutlook, InformacoesGoogleCalendar, \
     InformacoesAssistentes, InformacoesCRM, InformacoesRDStationCRMClient, InformacoesRDStationDealStage, \
     InformacoesFinanceiras, InformacoesAsaas, InformacoesAssistente, InformacoesAgendaUnica, InformacoesVoz, \
-    InformacoesCriarEmpresa, InformacoesColaborador
+    InformacoesCriarEmpresa, InformacoesColaborador, InformacoesMidia
 from app.schemas.empresa_schema import EmpresaSchema, AgendaSchema, DepartamentoSchema, AssistenteSchema, \
     DigisacClientSchema, EvolutionAPIClientSchema, OutlookClientSchema, GoogleCalendarClientSchema, \
     RDStationCRMClientSchema, RDStationCRMDealStageSchema, AsaasClientSchema, VozSchema, EmpresaMinSchema, \
-    ColaboradorSchema
+    ColaboradorSchema, MidiaSchema
 
 
 async def verificar_permissao_empresa(
@@ -135,6 +136,64 @@ async def remover_colaborador(
     colaborador = db.query(Colaborador).filter_by(id=id, id_empresa=empresa.id).first()
     if colaborador:
         db.delete(colaborador)
+        db.commit()
+        return True
+    return False
+
+@router.post("/{slug}/informacoes_basicas/midia")
+async def adicionar_midia(
+        slug: str,
+        request: InformacoesMidia,
+        empresa: Empresa = Depends(verificar_permissao_empresa),
+        db: Session = Depends(obter_sessao)
+):
+    midia = Midia(
+        url=request.url,
+        tipo=request.tipo,
+        mediatype=request.mediatype,
+        nome=request.nome,
+        atalho=request.atalho,
+        ordem=request.ordem,
+        id_empresa=empresa.id
+    )
+
+    db.add(midia)
+    db.commit()
+    db.refresh(midia)
+    return midia
+
+@router.put("/{slug}/informacoes_basicas/midia", response_model=MidiaSchema)
+async def alterar_midia(
+        slug: str,
+        request: InformacoesMidia,
+        empresa: Empresa = Depends(verificar_permissao_empresa),
+        db: Session = Depends(obter_sessao)
+):
+    midia = db.query(Midia).filter_by(id=request.id, id_empresa=empresa.id).first()
+    if not midia:
+        raise HTTPException(status_code=404, detail="Mídia não encontrada para essa empresa")
+
+    midia.url = request.url
+    midia.tipo = request.tipo
+    midia.mediatype = request.mediatype
+    midia.nome = request.nome
+    midia.atalho = request.atalho
+    midia.ordem= request.ordem
+
+    db.commit()
+    return midia
+
+@router.delete("/{slug}/informacoes_basicas/midia/{id}")
+async def remover_midia(
+        slug: str,
+        id: int,
+        empresa: Empresa = Depends(verificar_permissao_empresa),
+        db: Session = Depends(obter_sessao)
+):
+    midia = db.query(Midia).filter_by(id=id, id_empresa=empresa.id).first()
+    if midia:
+        db.delete(midia)
+        db.commit()
         return True
     return False
 

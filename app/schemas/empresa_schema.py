@@ -105,6 +105,18 @@ class ColaboradorSchema(BaseModel):
     class Config:
         orm_mode = True
 
+class MidiaSchema(BaseModel):
+    id: int
+    url: str
+    tipo: str
+    mediatype: str
+    nome: str
+    atalho: str
+    ordem: int
+
+    class Config:
+        orm_mode = True
+
 class EmpresaSchema(BaseModel):
     id: int
     nome: str
@@ -126,6 +138,7 @@ class EmpresaSchema(BaseModel):
     mensagem_erro_ia: Optional[str]
     assistentes: List[AssistenteSchema]
     colaboradores: List[ColaboradorSchema]
+    midias: List[MidiaSchema]
     vozes: List[VozSchema]
     assistentePadrao: Optional[int]
     agenda: Optional[List[AgendaSchema]]

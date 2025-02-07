@@ -30,6 +30,22 @@ class InformacoesColaborador(BaseModel):
             return None
         return valor
 
+class InformacoesMidia(BaseModel):
+    id: Optional[int] = None
+    url: str
+    tipo: str
+    mediatype: str
+    nome: str
+    atalho: str
+    ordem: int
+
+    @field_validator("id", mode="before")
+    @classmethod
+    def int_vazio(cls, valor):
+        if isinstance(valor, str) and valor.strip() == "":
+            return None
+        return valor
+
 class InformacoesAssistentes(BaseModel):
     assistente_padrao: Optional[int] = None
 
