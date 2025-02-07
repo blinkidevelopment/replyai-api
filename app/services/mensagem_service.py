@@ -28,7 +28,7 @@ async def enviar_mensagem(mensagem: str, audio: bool, midia: str | None, contato
                 if ass_reescrita_db:
                     assistente_reescrita = Assistant(nome=ass_reescrita_db.nome, id=ass_reescrita_db.assistantId, api_key=empresa.openai_api_key)
                     assistente_reescrita.adicionar_mensagens([mensagem], [], None)
-                    mensagem_reescrita, _ = assistente_reescrita.criar_rodar_thread(thread_id=contato.threadId)
+                    mensagem_reescrita, _ = assistente_reescrita.criar_rodar_thread(thread_id=None)
                     msg_audio = await elevenlabs_client.gerar_audio(mensagem=mensagem_reescrita, id_voz=voz.voiceId, stability=voz.stability, similarity_boost=voz.similarity_boost, style=voz.style)
     message_client.enviar_mensagem(mensagem=mensagem, base64=msg_audio, mediatype=mediatype, nome_arquivo=None, contact_id=contato.contactId, userId=None, origin="bot", nome_assistente=assistente.nome)
 
