@@ -8,12 +8,12 @@ class Key(BaseModel):
     id: str
 
 class DeviceListMetadata(BaseModel):
-    senderKeyHash: str
-    senderTimestamp: str
-    senderAccountType: str
-    receiverAccountType: str
-    recipientKeyHash: str
-    recipientTimestamp: str
+    senderKeyHash: Optional[str] = None
+    senderTimestamp: Optional[str] = None
+    senderAccountType: Optional[str] = None
+    receiverAccountType: Optional[str] = None
+    recipientKeyHash: Optional[str] = None
+    recipientTimestamp: Optional[str] = None
 
 class MessageContextInfo(BaseModel):
     deviceListMetadata: DeviceListMetadata
