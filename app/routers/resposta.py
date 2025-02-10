@@ -28,7 +28,8 @@ async def responder(
         if isinstance(request, EvolutionAPIRequest):
             if request.data.key.fromMe:
                 empresa = (await obter_empresa(slug, token, db))[0]
-                await mudar_recebimento_ia(request.data.key.remoteJid, empresa, False, db)
+                if empresa:
+                    await mudar_recebimento_ia(request.data.key.remoteJid, empresa, False, db)
                 return resultado
 
         dados_empresa = await obter_empresa(slug, token, db)

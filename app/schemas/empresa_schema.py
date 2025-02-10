@@ -123,6 +123,7 @@ class EmpresaSchema(BaseModel):
     slug: str
     token: str
     fuso_horario: str
+    empresa_ativa: bool
     message_client_type: Optional[str]
     agenda_client_type: Optional[str]
     crm_client_type: Optional[str]

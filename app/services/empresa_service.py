@@ -7,11 +7,10 @@ from app.services.agendamento_service import criar_agenda_client
 from app.services.crm_service import criar_crm_client
 from app.services.mensagem_service import criar_message_client
 from app.utils.assistant import Assistant
-from app.utils.digisac import Digisac
 
 
 async def obter_empresa(slug: str, token: str, db: Session):
-    empresa: Empresa | None = db.query(Empresa).filter_by(slug=slug, token=token).first()
+    empresa: Empresa | None = db.query(Empresa).filter_by(slug=slug, token=token, empresa_ativa=True).first()
 
     if empresa is not None:
         message_client = criar_message_client(empresa, db)

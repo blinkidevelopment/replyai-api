@@ -30,7 +30,7 @@ async def verificar_permissao_empresa(
     if not empresa:
         raise HTTPException(status_code=404, detail="Empresa não encontrada")
 
-    if usuario.id_empresa is not None and usuario.id_empresa != empresa.id:
+    if usuario.id_empresa is not None and (usuario.id_empresa != empresa.id or not empresa.empresa_ativa):
         raise HTTPException(status_code=403, detail="Você não tem permissão para acessar esta empresa")
 
     return empresa
@@ -44,7 +44,7 @@ async def obter_todas_empresas(usuario: Usuario = Depends(obter_usuario_logado),
     if not usuario.id_empresa:
         empresas = db.query(Empresa).all()
     else:
-        empresas = db.query(Empresa).filter_by(id=usuario.id_empresa).all()
+        empresas = db.query(Empresa).filter_by(id=usuario.id_empresa, empresa_ativa=True).all()
     return empresas
 
 @router.post("/")
@@ -62,7 +62,8 @@ async def criar_empresa(
                 slug=request.slug,
                 token=token,
                 fuso_horario=request.fuso_horario,
-                openai_api_key=request.openai_api_key
+                openai_api_key=request.openai_api_key,
+                empresa_ativa=request.empresa_ativa
             )
             db.add(empresa)
             db.commit()
@@ -87,6 +88,7 @@ async def alterar_informacoes_basicas(
 ):
     empresa.nome = request.nome
     empresa.fuso_horario = request.fuso_horario
+    empresa.empresa_ativa = request.empresa_ativa
     db.commit()
     return empresa
 

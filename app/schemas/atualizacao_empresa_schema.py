@@ -7,10 +7,12 @@ class InformacoesCriarEmpresa(BaseModel):
     slug: str
     fuso_horario: str
     openai_api_key: str
+    empresa_ativa: bool
 
 class InformacoesBasicas(BaseModel):
     nome: str
     fuso_horario: str
+    empresa_ativa: bool
 
 class InformacoesColaborador(BaseModel):
     id: Optional[int] = None

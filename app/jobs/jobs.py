@@ -12,7 +12,7 @@ async def retomar_conversa():
 
     with retornar_sessao() as db:
         try:
-            empresas = db.query(Empresa).filter_by(recall_ativo=True).all()
+            empresas = db.query(Empresa).filter_by(recall_ativo=True, empresa_ativa=True).all()
 
             for empresa in empresas:
                 timeout_padrao = empresa.recall_timeout_minutes or 60
@@ -49,7 +49,7 @@ async def confirmar_agendamento():
 
     with retornar_sessao() as db:
         try:
-            empresas = db.query(Empresa).filter_by(confirmar_agendamentos_ativo=True).all()
+            empresas = db.query(Empresa).filter_by(confirmar_agendamentos_ativo=True, empresa_ativa=True).all()
 
             for empresa in empresas:
                 await enviar_confirmacao_consulta(dia_seguinte.strftime("%Y-%m-%d"), data_atual.strftime("%Y-%m-%dT%H:%M:%S"), empresa, db)
@@ -65,7 +65,7 @@ async def avisar_vencimento():
 
     with retornar_sessao() as db:
         try:
-            empresas = db.query(Empresa).filter_by(lembrar_vencimentos_ativo=True).all()
+            empresas = db.query(Empresa).filter_by(lembrar_vencimentos_ativo=True, empresa_ativa=True).all()
 
             for empresa in empresas:
                 await enviar_aviso_vencimento(dia_seguinte, data_atual_formatada, empresa, db)
@@ -79,7 +79,7 @@ async def cobrar_inadimplentes():
 
     with retornar_sessao() as db:
         try:
-            empresas = db.query(Empresa).filter_by(cobrar_inadimplentes_ativo=True).all()
+            empresas = db.query(Empresa).filter_by(cobrar_inadimplentes_ativo=True, empresa_ativa=True).all()
 
             for empresa in empresas:
                 await enviar_cobranca_inadimplente(data_atual, empresa, db)

@@ -69,6 +69,7 @@ class Empresa(Base):
     nome = Column(String)
     token = Column(String, unique=True, nullable=False)
     fuso_horario = Column(String)
+    empresa_ativa = Column(Boolean)
     message_client_type = Column(String)
     agenda_client_type = Column(String)
     crm_client_type = Column(String)
