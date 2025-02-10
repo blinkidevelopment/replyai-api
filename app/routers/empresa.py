@@ -784,14 +784,15 @@ async def adicionar_cliente_asaas(
         empresa: Empresa = Depends(verificar_permissao_empresa),
         db: Session = Depends(obter_sessao)
 ):
-    asaas_client = db.query(AsaasClient).filter_by(id_empresa=empresa.id).first()
+    asaas_client = db.query(AsaasClient).filter_by(id_empresa=empresa.id, client_number=request.numero_cliente).first()
     if asaas_client:
-        raise HTTPException(status_code=404, detail="Essa empresa já possui um cliente do Asaas")
+        raise HTTPException(status_code=409, detail="Essa empresa já possui um cliente do Asaas com esse número de cliente")
 
     asaas_client = AsaasClient(
         token=request.token,
         rotulo=request.rotulo,
-        client_number=request.numero_cliente
+        client_number=request.numero_cliente,
+        id_empresa=empresa.id
     )
 
     db.add(asaas_client)
@@ -800,18 +801,31 @@ async def adicionar_cliente_asaas(
     return asaas_client
 
 @router.put("/{slug}/informacoes_financeiras/asaas", response_model=AsaasClientSchema)
-async def alterar_informacoes_asaas(
+async def alterar_informacoes_cliente_asaas(
         slug: str,
         request: InformacoesAsaas,
         empresa: Empresa = Depends(verificar_permissao_empresa),
         db: Session = Depends(obter_sessao)
 ):
-    asaas_client = db.query(AsaasClient).filter_by(id_empresa=empresa.id).first()
+    asaas_client = db.query(AsaasClient).filter_by(id_empresa=empresa.id, client_number=request.numero_cliente).first()
     if not asaas_client:
         raise HTTPException(status_code=404, detail="Cliente do Asaas não encontrado para essa empresa")
 
     asaas_client.token = request.token
     asaas_client.rotulo = request.rotulo
-    asaas_client.client_number = request.numero_cliente
     db.commit()
     return asaas_client
+
+@router.delete("/{slug}/informacoes_financeiras/asaas/{id}")
+async def remover_cliente_asaas(
+        slug: str,
+        id: int,
+        empresa: Empresa = Depends(verificar_permissao_empresa),
+        db: Session = Depends(obter_sessao)
+):
+    asaas_client = db.query(AsaasClient).filter_by(id=id, id_empresa=empresa.id).first()
+    if asaas_client:
+        db.delete(asaas_client)
+        db.commit()
+        return True
+    return False
