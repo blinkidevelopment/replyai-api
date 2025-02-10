@@ -253,6 +253,23 @@ async def alterar_assistente(
     db.commit()
     return assistente
 
+@router.delete("/{slug}/informacoes_assistentes/assistente/{id}")
+async def remover_assistente(
+        slug: str,
+        id: int,
+        empresa: Empresa = Depends(verificar_permissao_empresa),
+        db: Session = Depends(obter_sessao)
+):
+    if empresa.assistentePadrao == id:
+        raise HTTPException(status_code=403, detail="Não é possível excluir o assistente padrão da empresa. Troque o assistente padrão e tente novamente")
+
+    assistente = db.query(Assistente).filter_by(id=id, id_empresa=empresa.id).first()
+    if assistente:
+        db.delete(assistente)
+        db.commit()
+        return True
+    return False
+
 @router.post("/{slug}/informacoes_assistentes/voz")
 async def adicionar_voz(
         slug: str,
@@ -290,6 +307,20 @@ async def alterar_voz(
     voz.style = request.style
     db.commit()
     return voz
+
+@router.delete("/{slug}/informacoes_assistentes/voz/{id}")
+async def remover_voz(
+        slug: str,
+        id: int,
+        empresa: Empresa = Depends(verificar_permissao_empresa),
+        db: Session = Depends(obter_sessao)
+):
+    voz = db.query(Voz).filter_by(id=id, id_empresa=empresa.id).first()
+    if voz:
+        db.delete(voz)
+        db.commit()
+        return True
+    return False
 
 @router.put("/{slug}/informacoes_mensagens", response_model=EmpresaSchema)
 async def alterar_informacoes_mensagens(
@@ -397,6 +428,24 @@ async def alterar_informacoes_departamento(
     db.commit()
     return departamento
 
+@router.delete("/{slug}/informacoes_mensagens/digisac/departamento/{id}")
+async def remover_departamento(
+        slug: str,
+        id: int,
+        empresa: Empresa = Depends(verificar_permissao_empresa),
+        db: Session = Depends(obter_sessao)
+):
+    digisac_client = db.query(DigisacClient).filter_by(id_empresa=empresa.id).first()
+    if not digisac_client:
+        raise HTTPException(status_code=404, detail="Cliente do Digisac não encontrado para essa empresa")
+
+    departamento = db.query(Departamento).filter_by(id=id, id_digisac_client=digisac_client.id).first()
+    if departamento:
+        db.delete(departamento)
+        db.commit()
+        return True
+    return False
+
 @router.post("/{slug}/informacoes_mensagens/evolutionapi")
 async def adicionar_cliente_evolutionapi(
         slug: str,
@@ -481,6 +530,20 @@ async def alterar_informacoes_agenda(
     agenda.atalho = request.atalho
     db.commit()
     return agenda
+
+@router.delete("/{slug}/informacoes_agenda/agenda/{id}")
+async def remover_agenda(
+        slug: str,
+        id: int,
+        empresa: Empresa = Depends(verificar_permissao_empresa),
+        db: Session = Depends(obter_sessao)
+):
+    agenda = db.query(Agenda).filter_by(id=id, id_empresa=empresa.id).first()
+    if agenda:
+        db.delete(agenda)
+        db.commit()
+        return True
+    return False
 
 @router.post("/{slug}/informacoes_agenda/outlook")
 async def adicionar_cliente_outlook(
@@ -672,16 +735,34 @@ async def alterar_informacoes_estagio(
     if not rdstationcrm_client:
         raise HTTPException(status_code=404, detail="Cliente do RD Station CRM não encontrado para essa empresa")
 
-    deal_stage = db.query(RDStationCRMDealStage).filter_by(id=request.id, id_rdstationcrm_client=rdstationcrm_client.id).first()
-    if not deal_stage:
+    estagio = db.query(RDStationCRMDealStage).filter_by(id=request.id, id_rdstationcrm_client=rdstationcrm_client.id).first()
+    if not estagio:
         raise HTTPException(status_code=404, detail="Estágio não encontrado para esse cliente do RD Station CRM")
 
-    deal_stage.atalho = request.atalho
-    deal_stage.deal_stage_id = request.deal_stage_id
-    deal_stage.user_id = request.user_id
-    deal_stage.deal_stage_inicial = request.estagio_inicial
+    estagio.atalho = request.atalho
+    estagio.deal_stage_id = request.deal_stage_id
+    estagio.user_id = request.user_id
+    estagio.deal_stage_inicial = request.estagio_inicial
     db.commit()
-    return deal_stage
+    return estagio
+
+@router.delete("/{slug}/informacoes_crm/rdstation/estagio/{id}")
+async def remover_estagio(
+        slug: str,
+        id: int,
+        empresa: Empresa = Depends(verificar_permissao_empresa),
+        db: Session = Depends(obter_sessao)
+):
+    rdstationcrm_client = db.query(RDStationCRMClient).filter_by(id_empresa=empresa.id).first()
+    if not rdstationcrm_client:
+        raise HTTPException(status_code=404, detail="Cliente do RD Station CRM não encontrado para essa empresa")
+
+    estagio = db.query(RDStationCRMDealStage).filter_by(id=id, id_rdstationcrm_client=rdstationcrm_client.id).first()
+    if estagio:
+        db.delete(estagio)
+        db.commit()
+        return True
+    return False
 
 @router.put("/{slug}/informacoes_financeiras", response_model=EmpresaSchema)
 async def alterar_informacoes_financeiras(

@@ -41,7 +41,7 @@ class Assistente(Base):
     nome = Column(String)
     proposito = Column(String)
     atalho = Column(String)
-    id_voz = Column(Integer, ForeignKey("vozes.id"))
+    id_voz = Column(Integer, ForeignKey("vozes.id", ondelete="SET NULL"), nullable=True)
     id_empresa = Column(Integer, ForeignKey("empresas.id"))
 
     empresa = relationship("Empresa", backref="assistentes", foreign_keys=[id_empresa])
