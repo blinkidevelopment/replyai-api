@@ -11,6 +11,7 @@ class Usuario(Base):
     email = Column(String, unique=True, index=True)
     senha = Column(String)
     ativo = Column(Boolean, default=True)
+    admin = Column(Boolean, default=False)
     id_empresa = Column(Integer, ForeignKey("empresas.id"))
 
     empresa = relationship("Empresa", backref="usuarios")

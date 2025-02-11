@@ -117,6 +117,17 @@ class MidiaSchema(BaseModel):
     class Config:
         orm_mode = True
 
+class UsuarioSchema(BaseModel):
+    id: int
+    nome: str
+    email: str
+    ativo: bool
+    admin: bool
+    id_empresa: Optional[int] = None
+
+    class Config:
+        from_attributes = True
+
 class EmpresaSchema(BaseModel):
     id: int
     nome: str
@@ -154,8 +165,15 @@ class EmpresaSchema(BaseModel):
         orm_mode = True
 
 class EmpresaMinSchema(BaseModel):
+    id: int
     slug: str
     nome: str
 
     class Config:
         orm_mode = True
+
+class ListaUsuariosSchema(BaseModel):
+    has_more: bool
+    next_cursor: Optional[int] = None
+    limit: int
+    data: List[UsuarioSchema]
