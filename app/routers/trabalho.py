@@ -1,6 +1,6 @@
 import os
 
-from fastapi import APIRouter, Request, HTTPException
+from fastapi import APIRouter, Request, HTTPException, BackgroundTasks
 from fastapi.params import Depends
 from sqlalchemy.orm import Session
 
@@ -28,19 +28,19 @@ async def executar_retomar_conversa():
     return {"status": "Trabalho [retomar_conversas] executado com sucesso"}
 
 @router.post("/confirmar_agendamentos")
-async def executar_confirmar_agendamento():
-    await confirmar_agendamento()
-    return {"status": "Trabalho [confirmar_agendamentos] executado com sucesso"}
+async def executar_confirmar_agendamento(background_tasks: BackgroundTasks):
+    background_tasks.add_task(confirmar_agendamento)
+    return {"status": "Trabalho [confirmar_agendamentos] iniciado com sucesso"}
 
 @router.post("/avisar_vencimentos")
-async def executar_avisar_vencimento():
-    await avisar_vencimento()
-    return {"status": "Trabalho [avisar_vencimentos] executado com sucesso"}
+async def executar_avisar_vencimento(background_tasks: BackgroundTasks):
+    background_tasks.add_task(avisar_vencimento)
+    return {"status": "Trabalho [avisar_vencimentos] iniciado com sucesso"}
 
 @router.post("/cobrar_inadimplentes")
-async def executar_cobrar_inadimplente():
-    await cobrar_inadimplentes()
-    return {"status": "Trabalho [cobrar_inadimplentes] executado com sucesso"}
+async def executar_cobrar_inadimplente(background_tasks: BackgroundTasks):
+    background_tasks.add_task(cobrar_inadimplentes)
+    return {"status": "Trabalho [cobrar_inadimplentes] iniciado com sucesso"}
 
 @router.post("/agradecer_pagamento/asaas/{slug}/{token}/{client_number}")
 async def executar_agradecer_pagamento(
