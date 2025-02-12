@@ -82,6 +82,7 @@ class Empresa(Base):
     recall_confirmacao_ativo = Column(Boolean)
     confirmar_agendamentos_ativo = Column(Boolean)
     lembrar_vencimentos_ativo = Column(Boolean)
+    enviar_boleto_lembrar_vencimento = Column(Boolean)
     cobrar_inadimplentes_ativo = Column(Boolean)
     tipo_cancelamento_evento = Column(String)
     mensagem_erro_ia = Column(String)

@@ -146,6 +146,7 @@ class EmpresaSchema(BaseModel):
     recall_confirmacao_ativo: Optional[bool]
     confirmar_agendamentos_ativo: Optional[bool]
     lembrar_vencimentos_ativo: Optional[bool]
+    enviar_boleto_lembrar_vencimento: Optional[bool]
     cobrar_inadimplentes_ativo: Optional[bool]
     tipo_cancelamento_evento: Optional[str]
     mensagem_erro_ia: Optional[str]

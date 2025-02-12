@@ -175,6 +175,7 @@ class InformacoesRDStationDealStage(BaseModel):
 class InformacoesFinanceiras(BaseModel):
     tipo_cliente: Optional[Literal["asaas"]]
     lembrar_vencimentos: bool
+    enviar_boletos_vencimentos: bool
     cobrar_inadimplentes: bool
 
     @field_validator("tipo_cliente", mode="before")

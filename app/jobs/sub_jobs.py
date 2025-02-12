@@ -84,7 +84,7 @@ async def enviar_aviso_vencimento(data_cobranca: str, data_atual: str, empresa: 
         resposta = financial_client.listar_cobrancas(due_date_le=data_cobranca, due_date_ge=data_cobranca, status="PENDING", limit="100")
         if resposta.get("totalCount", 0) > 0:
             for cobranca in resposta.get("data", []):
-                await processar_cobranca("extrair_dados_aviso_vencimento", cobranca, data_atual, empresa, message_client, financial_client, db)
+                await processar_cobranca("extrair_dados_aviso_vencimento", cobranca, data_atual, empresa.enviar_boleto_lembrar_vencimento, empresa, message_client, financial_client, db)
 
 
 async def enviar_cobranca_inadimplente(data: str, empresa: Empresa, db: Session):
@@ -95,10 +95,10 @@ async def enviar_cobranca_inadimplente(data: str, empresa: Empresa, db: Session)
         resposta = financial_client.listar_cobrancas(status="OVERDUE", limit="100")
         if resposta.get("totalCount", 0) > 0:
             for cobranca in resposta.get("data", []):
-                await processar_cobranca("extrair_dados_inadimplencia", cobranca, data, empresa, message_client, financial_client, db)
+                await processar_cobranca("extrair_dados_inadimplencia", cobranca, data, False, empresa, message_client, financial_client, db)
 
 
-async def processar_cobranca(acao: str, cobranca: dict, data_atual: str, empresa: Empresa, message_client: MessageClient, financial_client: FinancialClient, db: Session):
+async def processar_cobranca(acao: str, cobranca: dict, data_atual: str, enviar_boleto: bool, empresa: Empresa, message_client: MessageClient, financial_client: FinancialClient, db: Session):
     cliente = financial_client.obter_cliente(id_cliente=cobranca.get("customer", ""))
     if cliente:
         telefone = cliente.get("phone", "")
@@ -107,6 +107,7 @@ async def processar_cobranca(acao: str, cobranca: dict, data_atual: str, empresa
         descricao_boleto = cobranca.get("description", "")
         resposta_vencimento, thread_id = await extrair_dados_cobranca(acao, nome, telefone, data_atual, data_vencimento,
                                                                       descricao_boleto, empresa, db)
+
         if resposta_vencimento:
             assistente, assistente_db_id = await obter_assistente(empresa, "cobrar", None, db)
             id_contato = message_client.obter_id_contato(resposta_vencimento.telefone, nome)
@@ -114,6 +115,15 @@ async def processar_cobranca(acao: str, cobranca: dict, data_atual: str, empresa
             await atualizar_assistente_atual_contato(contato, assistente_db_id, db)
             await direcionar(resposta_vencimento.resposta, False, message_client, None, None, empresa, contato,
                              assistente, db)
+
+            if enviar_boleto:
+                url_boleto = cobranca.get("bankSlipUrl", "")
+                if url_boleto:
+                    boleto = message_client.baixar_arquivo(url_boleto)
+                    if boleto:
+                        mediatype = "application/pdf" if isinstance(message_client, Digisac) else "document"
+                        message_client.enviar_mensagem(mensagem="", base64=boleto, mediatype=mediatype, nome_arquivo="boleto.pdf", contact_id=contato.contactId, userId=None, origin="bot", nome_assistente=assistente.nome)
+
             await atualizar_thread_contato(contato, thread_id, db)
 
 

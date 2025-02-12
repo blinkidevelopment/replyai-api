@@ -776,6 +776,7 @@ async def alterar_informacoes_financeiras(
 ):
     empresa.financial_client_type = request.tipo_cliente
     empresa.lembrar_vencimentos_ativo = request.lembrar_vencimentos
+    empresa.enviar_boleto_lembrar_vencimento = request.enviar_boletos_vencimentos
     empresa.cobrar_inadimplentes_ativo = request.cobrar_inadimplentes
     db.commit()
     return empresa

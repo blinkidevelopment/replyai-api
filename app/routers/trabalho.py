@@ -54,8 +54,8 @@ async def executar_agradecer_pagamento(
     if dados_empresa is not None:
         empresa, message_client, _, __ = dados_empresa
         financial_client = criar_financial_client(empresa, db, client_number)
-        await processar_cobranca("extrair_dados_agradecer_pagamento", request.payment.model_dump(), "", empresa,
-                                 message_client, financial_client, db)
+        await processar_cobranca("extrair_dados_agradecer_pagamento", request.payment.model_dump(), "", False,
+                                 empresa, message_client, financial_client, db)
         return {"status": "Trabalho [agradecer_pagamento] executado com sucesso"}
 
 @router.post("/enviar_nf/asaas/{slug}/{token}/{client_number}")
