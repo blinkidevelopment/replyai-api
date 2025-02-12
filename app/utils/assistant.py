@@ -1,5 +1,6 @@
 import io
 import base64
+import json
 from typing import List
 
 from PIL import Image
@@ -7,6 +8,8 @@ from fastapi import UploadFile
 import httpx
 from openai import OpenAI
 import time
+
+from app.utils.function_utils import obter_data_hora_atual
 
 
 class Assistant:
@@ -192,14 +195,16 @@ class Assistant:
 
                     run = self.client.beta.threads.runs.create(
                         assistant_id=self.id,
-                        thread_id=thread_id
+                        thread_id=thread_id,
+                        tool_choice="auto"
                     )
                 else:
                     run = self.client.beta.threads.create_and_run(
                         assistant_id=self.id,
                         thread={
                             "messages": self.mensagens
-                        }
+                        },
+                        tool_choice="auto"
                     )
 
                 while run.status not in ["completed", "canceled", "failed", "expired"]:
@@ -207,6 +212,32 @@ class Assistant:
                         thread_id=run.thread_id,
                         run_id=run.id
                     )
+
+                    if run.required_action and run.required_action.type == "submit_tool_outputs":
+                        tool_calls = run.required_action.submit_tool_outputs.tool_calls
+
+                        function_outputs = []
+                        for tool_call in tool_calls:
+                            nome_funcao = tool_call.function.name
+                            argumentos = json.loads(tool_call.function.arguments)
+
+                            try:
+                                resultado_funcao = self.executar_funcao(nome_funcao, argumentos)
+
+                                function_outputs.append({
+                                    "tool_call_id": tool_call.id,
+                                    "output": json.dumps(resultado_funcao)
+                                })
+                            except Exception as e:
+                                print(f"Erro ao executar {nome_funcao}: {e}")
+
+                        if function_outputs:
+                            self.client.beta.threads.runs.submit_tool_outputs(
+                                thread_id=run.thread_id,
+                                run_id=run.id,
+                                tool_outputs=function_outputs
+                            )
+
                     time.sleep(2)
 
                 if run.status in ["canceled", "failed", "expired"]:
@@ -255,6 +286,12 @@ class Assistant:
         )
 
         return resultado.data[0].content[0].text.value
+
+    def executar_funcao(self, nome_funcao, argumentos):
+        if nome_funcao == "get_current_datetime":
+            return obter_data_hora_atual(self.id)
+        else:
+            raise ValueError(f"Função desconhecida chamada: {nome_funcao}")
 
 
 class Resposta:
