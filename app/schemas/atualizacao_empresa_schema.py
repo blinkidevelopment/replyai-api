@@ -79,6 +79,7 @@ class InformacoesMensagens(BaseModel):
     tempo_recall_final_min: int
     quant_recalls: int
     ativar_recall: bool
+    ativar_recall_confirmacao: bool
     mensagem_erro_ia: Optional[str] = None
 
     @field_validator("mensagem_erro_ia", mode="before")

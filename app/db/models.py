@@ -79,6 +79,7 @@ class Empresa(Base):
     final_recall_timeout_minutes = Column(Integer)
     recall_quant = Column(Integer)
     recall_ativo = Column(Boolean)
+    recall_confirmacao_ativo = Column(Boolean)
     confirmar_agendamentos_ativo = Column(Boolean)
     lembrar_vencimentos_ativo = Column(Boolean)
     cobrar_inadimplentes_ativo = Column(Boolean)

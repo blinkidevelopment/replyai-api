@@ -143,6 +143,7 @@ class EmpresaSchema(BaseModel):
     final_recall_timeout_minutes: Optional[int]
     recall_quant: Optional[int]
     recall_ativo: Optional[bool]
+    recall_confirmacao_ativo: Optional[bool]
     confirmar_agendamentos_ativo: Optional[bool]
     lembrar_vencimentos_ativo: Optional[bool]
     cobrar_inadimplentes_ativo: Optional[bool]

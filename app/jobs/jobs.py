@@ -21,23 +21,26 @@ async def retomar_conversa():
                 timeout_final = empresa.final_recall_timeout_minutes or 1440
                 timeout_final_time = agora - timedelta(minutes=timeout_final)
 
-                interacoes_inativas = db.query(Contato).filter(
+                query = db.query(Contato).filter(
                     Contato.id_empresa == empresa.id,
                     or_(
                         and_(
                             Contato.lastMessage <= timeout_padrao_time,
                             Contato.recallCount < empresa.recall_quant - 1,
-                            Contato.appointmentConfirmation == False,
                             Contato.receber_respostas_ia == True
                         ),
                         and_(
                             Contato.lastMessage <= timeout_final_time,
                             Contato.recallCount == empresa.recall_quant - 1,
-                            Contato.appointmentConfirmation == False,
                             Contato.receber_respostas_ia == True
                         )
                     )
-                ).all()
+                )
+
+                if not empresa.recall_confirmacao_ativo:
+                    query = query.filter_by(appointmentConfirmation=False)
+
+                interacoes_inativas = query.all()
 
                 for contato in interacoes_inativas:
                     await enviar_retomada_conversa(contato, empresa, db)

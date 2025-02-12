@@ -336,6 +336,7 @@ async def alterar_informacoes_mensagens(
     empresa.final_recall_timeout_minutes = request.tempo_recall_final_min
     empresa.recall_quant = request.quant_recalls
     empresa.recall_ativo = request.ativar_recall
+    empresa.recall_confirmacao_ativo = request.ativar_recall_confirmacao
     empresa.mensagem_erro_ia = request.mensagem_erro_ia
     db.commit()
     return empresa
