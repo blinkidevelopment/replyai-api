@@ -68,6 +68,7 @@ async def enviar_confirmacao_consulta(data: str, data_atual: str, empresa: Empre
                             db.commit()
                             await atualizar_assistente_atual_contato(contato, assistente_db_id, db)
                         if isinstance(message_client, Digisac):
+                            message_client.encerrar_chamado(contactId=contato.contactId, ticketTopicIds=[], comments="Chamado encerrado para confirmação de consulta", byUserId=None)
                             departamento = await obter_departamento(empresa, None, True, db)
                             if departamento:
                                 await transferir_contato(message_client, contato, departamento)
