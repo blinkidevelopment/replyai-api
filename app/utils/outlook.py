@@ -5,11 +5,11 @@ from msgraph.generated.models.body_type import BodyType
 from msgraph.generated.models.free_busy_status import FreeBusyStatus
 from msgraph.generated.models.item_body import ItemBody
 from msgraph.generated.models.location import Location
-from msgraph.generated.users.item.calendar.get_schedule.get_schedule_request_builder import RequestConfiguration
 from msgraph.generated.users.item.calendar.get_schedule.get_schedule_post_request_body import GetSchedulePostRequestBody
-from msgraph.generated.users.item.calendar.events.item.calendar.calendar_request_builder import RequestConfiguration as EventsRequestConfiguration
 from msgraph.generated.models.event import Event
 from msgraph.generated.models.date_time_time_zone import DateTimeTimeZone
+from kiota_abstractions.base_request_configuration import RequestConfiguration
+from msgraph.generated.users.item.events.events_request_builder import EventsRequestBuilder
 
 from app.utils.agenda_client import AgendaClient, Schedule
 from app.utils.assistant import RespostaTituloAgenda, RespostaTituloAgendaDataNova
@@ -77,11 +77,14 @@ class Outlook(AgendaClient):
 
     async def confirmar_evento(self, dados: RespostaTituloAgenda):
         try:
-            request_config = EventsRequestConfiguration()
-            request_config.query_parameters = {
-                "$select": "start,end,subject,id,location",
-                "$filter": f"startsWith(subject,'{dados.titulo}')"
-            }
+            query_params = EventsRequestBuilder.EventsRequestBuilderGetQueryParameters(
+                select=["start", "end", "subject", "id", "location"],
+                filter=f"startswith(subject, '{dados.titulo}')"
+            )
+
+            request_config = RequestConfiguration(
+                query_parameters=query_params
+            )
 
             response = await self.graph_client.users.by_user_id(dados.endereco_agenda).events.get(request_configuration=request_config)
 
@@ -98,11 +101,14 @@ class Outlook(AgendaClient):
 
     async def reagendar_evento(self, dados: RespostaTituloAgendaDataNova):
         try:
-            request_config = EventsRequestConfiguration()
-            request_config.query_parameters = {
-                "$select": "start,end,subject,id,location",
-                "$filter": f"startsWith(subject,'{dados.titulo}')"
-            }
+            query_params = EventsRequestBuilder.EventsRequestBuilderGetQueryParameters(
+                select=["start", "end", "subject", "id", "location"],
+                filter=f"startswith(subject, '{dados.titulo}')"
+            )
+
+            request_config = RequestConfiguration(
+                query_parameters=query_params
+            )
 
             response = await self.graph_client.users.by_user_id(dados.endereco_agenda).events.get(request_configuration=request_config)
 
@@ -123,11 +129,14 @@ class Outlook(AgendaClient):
 
     async def cancelar_evento(self, dados: RespostaTituloAgenda, tipo_cancelamento: str):
         try:
-            request_config = EventsRequestConfiguration()
-            request_config.query_parameters = {
-                "$select": "start,end,subject,id,location",
-                "$filter": f"startsWith(subject,'{dados.titulo}')"
-            }
+            query_params = EventsRequestBuilder.EventsRequestBuilderGetQueryParameters(
+                select=["start", "end", "subject", "id", "location"],
+                filter=f"startswith(subject, '{dados.titulo}')"
+            )
+
+            request_config = RequestConfiguration(
+                query_parameters=query_params
+            )
 
             response = await self.graph_client.users.by_user_id(dados.endereco_agenda).events.get(request_configuration=request_config)
 
