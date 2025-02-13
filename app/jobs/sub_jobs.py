@@ -38,7 +38,7 @@ async def enviar_retomada_conversa(contato: Contato, empresa: Empresa, db: Sessi
             if origem_mensagem is None or origem_mensagem == "user":
                 await redefinir_contato(contato, db)
                 return
-    resposta = await executar_thread(acao, None, contato, None, None, assistente, db)
+    resposta = await executar_thread(acao, None, contato, None, assistente, db)
     await direcionar(resposta, False, message_client, None, None, empresa, contato, assistente, db)
 
     if resposta.atividade != "E":

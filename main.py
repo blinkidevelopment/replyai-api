@@ -19,7 +19,5 @@ app.add_middleware(
 
 app.include_router(resposta.router, prefix="/resposta", tags=["Respostas"])
 app.include_router(trabalho.router, prefix="/trabalho",tags=["Trabalhos"])
-
 app.include_router(empresa.router, prefix="/empresa", tags=["Empresas"])
-
 app.include_router(usuario.router, prefix="/usuario", tags=["Usuarios"])

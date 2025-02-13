@@ -6,7 +6,7 @@ from app.schemas.digisac_schema import DigisacRequest
 from app.schemas.evolutionapi_schema import EvolutionAPIRequest
 from app.services.contato_service import obter_criar_contato, mudar_recebimento_ia
 from app.services.direcionamento_service import direcionar
-from app.services.empresa_service import obter_empresa, obter_colaboradores
+from app.services.empresa_service import obter_empresa
 from app.services.thread_service import executar_thread
 from app.services.mensagem_service import obter_mensagem, enviar_mensagem
 from app.db.database import obter_sessao
@@ -36,7 +36,6 @@ async def responder(
         if dados_empresa is not None:
             empresa, message_client, agenda_client, crm_client = dados_empresa
             contato, assistente, dados_contato = await obter_criar_contato(request, None, empresa, message_client, crm_client, db)
-            colaboradores = await obter_colaboradores(empresa, db) if dados_contato else None
 
             if not contato.receber_respostas_ia:
                 return resultado
@@ -46,7 +45,7 @@ async def responder(
             if isinstance(message_client, EvolutionAPI):
                 message_client.enviar_presenca(request.data.key.remoteJid, audio)
 
-            resposta = await executar_thread(mensagem, imagem, contato, dados_contato, colaboradores, assistente, db)
+            resposta = await executar_thread(mensagem, imagem, contato, dados_contato, assistente, db)
             await direcionar(resposta, audio, message_client, agenda_client, crm_client, empresa, contato, assistente, db)
             resultado = True
         return resultado

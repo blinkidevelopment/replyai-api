@@ -1,5 +1,3 @@
-import json
-
 from sqlalchemy.orm import Session
 
 from app.db.models import Empresa, Assistente, Agenda, DigisacClient, Departamento, Colaborador
@@ -49,17 +47,4 @@ async def obter_departamento(empresa: Empresa, atalho: str | None, dpt_confirmac
             departamento = db.query(Departamento).filter_by(atalho=atalho, id_digisac_client=digisac_client_db.id).first()
         if departamento is not None:
             return departamento
-    return None
-
-
-async def obter_colaboradores(empresa: Empresa, db: Session):
-    if empresa:
-        colaboradores = db.query(Colaborador).filter_by(id_empresa=empresa.id).all()
-        data = {
-            "colaboradores": [
-                {"nome": colab.nome, "apelido": colab.apelido, "departamento": colab.departamento}
-                for colab in colaboradores
-            ]
-        }
-        return json.dumps(data, ensure_ascii=False, indent=4)
     return None

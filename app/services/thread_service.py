@@ -12,7 +12,6 @@ async def executar_thread(
         imagem: str | None,
         contato: Contato,
         dados_contato: DadosContato | None,
-        colaboradores: str | None,
         assistente: Assistant,
         db: Session
 ):
@@ -21,9 +20,6 @@ async def executar_thread(
 
     if dados_contato:
         assistente.adicionar_mensagens([dados_contato.__str__()], [], contato.threadId or None)
-
-    if colaboradores:
-        assistente.adicionar_mensagens([colaboradores], [], contato.threadId or None)
 
     if imagem:
         id_imagens = assistente.subir_imagens([imagem])
