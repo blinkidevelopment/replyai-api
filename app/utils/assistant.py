@@ -9,7 +9,7 @@ import httpx
 from openai import OpenAI
 import time
 
-from app.utils.function_utils import obter_data_hora_atual
+from app.utils.function_utils import obter_data_hora_atual, obter_colaboradores
 
 
 class Assistant:
@@ -290,6 +290,8 @@ class Assistant:
     def executar_funcao(self, nome_funcao, argumentos):
         if nome_funcao == "get_current_datetime":
             return obter_data_hora_atual(self.id)
+        if nome_funcao == "get_employees":
+            return obter_colaboradores(self.id)
         else:
             raise ValueError(f"Função desconhecida chamada: {nome_funcao}")
 
@@ -367,22 +369,25 @@ class RespostaConfirmacao:
 
 
 class RespostaTituloAgenda:
-    def __init__(self, endereco_agenda: str, titulo: str):
+    def __init__(self, endereco_agenda: str, titulo: str, start_datetime: str):
         self.endereco_agenda = endereco_agenda
         self.titulo = titulo
+        self.start_datetime = start_datetime
 
     @classmethod
     def from_dict(cls, data: dict):
         return cls(
             endereco_agenda=data["endereco_agenda"],
-            titulo=data["titulo"]
+            titulo=data["titulo"],
+            start_datetime=data["start_datetime"]
         )
 
 
 class RespostaTituloAgendaDataNova:
-    def __init__(self, endereco_agenda: str, titulo: str, data_nova: str):
+    def __init__(self, endereco_agenda: str, titulo: str, start_datetime: str, data_nova: str):
         self.endereco_agenda = endereco_agenda
         self.titulo = titulo
+        self.start_datetime = start_datetime
         self.data_nova = data_nova
 
     @classmethod
@@ -390,6 +395,7 @@ class RespostaTituloAgendaDataNova:
         return cls(
             endereco_agenda=data["endereco_agenda"],
             titulo=data["titulo"],
+            start_datetime=data["start_datetime"],
             data_nova=data["data_nova"]
         )
 

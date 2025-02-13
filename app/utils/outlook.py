@@ -79,7 +79,7 @@ class Outlook(AgendaClient):
         try:
             query_params = EventsRequestBuilder.EventsRequestBuilderGetQueryParameters(
                 select=["start", "end", "subject", "id", "location"],
-                filter=f"startswith(subject, '{dados.titulo}')"
+                filter=f"start/datetime eq '{dados.start_datetime}' and subject eq '{dados.titulo}'"
             )
 
             request_config = RequestConfiguration(
@@ -103,7 +103,7 @@ class Outlook(AgendaClient):
         try:
             query_params = EventsRequestBuilder.EventsRequestBuilderGetQueryParameters(
                 select=["start", "end", "subject", "id", "location"],
-                filter=f"startswith(subject, '{dados.titulo}')"
+                filter=f"start/datetime eq '{dados.start_datetime}' and subject eq '{dados.titulo}'"
             )
 
             request_config = RequestConfiguration(
@@ -131,7 +131,7 @@ class Outlook(AgendaClient):
         try:
             query_params = EventsRequestBuilder.EventsRequestBuilderGetQueryParameters(
                 select=["start", "end", "subject", "id", "location"],
-                filter=f"startswith(subject, '{dados.titulo}')"
+                filter=f"start/datetime eq '{dados.start_datetime}' and subject eq '{dados.titulo}'"
             )
 
             request_config = RequestConfiguration(
