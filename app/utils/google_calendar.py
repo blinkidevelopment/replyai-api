@@ -85,7 +85,8 @@ class GoogleCalendar(AgendaClient):
         try:
             eventos = self.service.events().list(
                 calendarId=dados.endereco_agenda,
-                q=dados.titulo
+                q=dados.titulo,
+                timeMin=dados.start_datetime
             ).execute()
 
             evento_obj = eventos.get("items")[0] if eventos.get("items") else None
@@ -106,7 +107,8 @@ class GoogleCalendar(AgendaClient):
         try:
             eventos = self.service.events().list(
                 calendarId=dados.endereco_agenda,
-                q=dados.titulo
+                q=dados.titulo,
+                timeMin=dados.start_datetime
             ).execute()
 
             evento_obj = eventos.get("items")[0] if eventos.get("items") else None
@@ -139,7 +141,8 @@ class GoogleCalendar(AgendaClient):
         try:
             eventos = self.service.events().list(
                 calendarId=dados.endereco_agenda,
-                q=dados.titulo
+                q=dados.titulo,
+                timeMin=dados.start_datetime
             ).execute()
 
             evento_obj = eventos.get("items")[0] if eventos.get("items") else None
