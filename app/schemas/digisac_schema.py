@@ -48,7 +48,7 @@ class Data(BaseModel):
     serviceId: str
     accountId: str
     command: str
-    message: Message
+    message: Optional[Message]
 
 class DigisacRequest(BaseModel):
     event: str

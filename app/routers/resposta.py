@@ -38,8 +38,9 @@ async def responder(
             contato, assistente, dados_contato = await obter_criar_contato(request, None, empresa, message_client, crm_client, db)
 
             if isinstance(request, DigisacRequest):
-                if request.data.command == "reset":
-                    await redefinir_contato(contato, db)
+                if request.data.message is None:
+                    if request.data.command == "reset":
+                        await redefinir_contato(contato, db)
                     return resultado
 
             if not contato.receber_respostas_ia:
