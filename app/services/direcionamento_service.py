@@ -2,7 +2,8 @@ from sqlalchemy.orm import Session
 
 from app.db.models import Contato, Empresa
 from app.services.agendamento_service import verificar_data_sugerida, cadastrar_evento, extrair_titulo_agenda_evento
-from app.services.contato_service import encerrar_contato, atualizar_assistente_atual_contato, transferir_contato
+from app.services.contato_service import encerrar_contato, atualizar_assistente_atual_contato, transferir_contato, \
+    mudar_aguardando_humano
 from app.services.crm_service import mover_lead
 from app.services.empresa_service import obter_assistente, obter_endereco_agenda, obter_departamento
 from app.services.mensagem_service import enviar_mensagem
@@ -33,6 +34,7 @@ async def direcionar(
                 departamento = await obter_departamento(empresa, resposta.departamento, False, db)
                 if departamento:
                     await enviar_mensagem(resposta.mensagem, audio, resposta.midia, contato, empresa, message_client, assistente, db)
+                    await mudar_aguardando_humano(contato, True, db)
                     await transferir_contato(message_client, contato, departamento)
         case "E": # encerrar o contato
             await enviar_mensagem(resposta.mensagem, audio, resposta.midia, contato, empresa, message_client, assistente, db)

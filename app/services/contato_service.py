@@ -75,6 +75,7 @@ async def criar_contato(contact_id: str, id_negociacao: str | None, empresa: Emp
             appointmentConfirmation=False,
             deal_id=id_negociacao,
             receber_respostas_ia=receber_respostas_ia,
+            aguardando_humano=False,
             id_empresa=empresa.id
         )
         db.add(contato)
@@ -123,10 +124,19 @@ async def mudar_recebimento_ia(contato: Contato | str, empresa: Empresa, valor: 
     return False
 
 
+async def mudar_aguardando_humano(contato: Contato, valor: bool, db: Session):
+    if contato:
+        contato.aguardando_humano = valor
+        db.commit()
+        return True
+    return False
+
+
 async def redefinir_contato(contato: Contato, db: Session):
     contato.threadId = None
     contato.assistenteAtual = None
     contato.lastMessage = None
     contato.recallCount = 0
     contato.appointmentConfirmation = False
+    contato.aguardando_humano = False
     db.commit()

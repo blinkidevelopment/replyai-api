@@ -29,12 +29,14 @@ async def retomar_conversa():
                         and_(
                             Contato.lastMessage <= timeout_padrao_time,
                             Contato.recallCount < empresa.recall_quant - 1,
-                            Contato.receber_respostas_ia == True
+                            Contato.receber_respostas_ia == True,
+                            Contato.aguardando_humano == False
                         ),
                         and_(
                             Contato.lastMessage <= timeout_final_time,
                             Contato.recallCount == empresa.recall_quant - 1,
-                            Contato.receber_respostas_ia == True
+                            Contato.receber_respostas_ia == True,
+                            Contato.aguardando_humano == False
                         )
                     )
                 )

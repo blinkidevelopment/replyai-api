@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.schemas.digisac_schema import DigisacRequest
 from app.schemas.evolutionapi_schema import EvolutionAPIRequest
-from app.services.contato_service import obter_criar_contato, mudar_recebimento_ia
+from app.services.contato_service import obter_criar_contato, mudar_recebimento_ia, redefinir_contato
 from app.services.direcionamento_service import direcionar
 from app.services.empresa_service import obter_empresa
 from app.services.thread_service import executar_thread
@@ -36,6 +36,11 @@ async def responder(
         if dados_empresa is not None:
             empresa, message_client, agenda_client, crm_client = dados_empresa
             contato, assistente, dados_contato = await obter_criar_contato(request, None, empresa, message_client, crm_client, db)
+
+            if isinstance(request, DigisacRequest):
+                if request.data.command == "reset":
+                    await redefinir_contato(contato, db)
+                    return resultado
 
             if not contato.receber_respostas_ia:
                 return resultado

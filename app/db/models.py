@@ -29,6 +29,7 @@ class Contato(Base):
     appointmentConfirmation = Column(Boolean)
     deal_id = Column(String, default=None)
     receber_respostas_ia = Column(Boolean, default=True)
+    aguardando_humano = Column(Boolean, default=False)
     id_empresa = Column(Integer, ForeignKey("empresas.id"))
 
     empresa = relationship("Empresa", backref="contatos")
