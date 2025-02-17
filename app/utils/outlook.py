@@ -85,6 +85,7 @@ class Outlook(AgendaClient):
             request_config = RequestConfiguration(
                 query_parameters=query_params
             )
+            request_config.headers.try_add("Prefer", f'outlook.timezone="{self.timezone}"')
 
             response = await self.graph_client.users.by_user_id(dados.endereco_agenda).events.get(request_configuration=request_config)
 
@@ -109,6 +110,7 @@ class Outlook(AgendaClient):
             request_config = RequestConfiguration(
                 query_parameters=query_params
             )
+            request_config.headers.try_add("Prefer", f'outlook.timezone="{self.timezone}"')
 
             response = await self.graph_client.users.by_user_id(dados.endereco_agenda).events.get(request_configuration=request_config)
 
@@ -137,6 +139,7 @@ class Outlook(AgendaClient):
             request_config = RequestConfiguration(
                 query_parameters=query_params
             )
+            request_config.headers.try_add("Prefer", f'outlook.timezone="{self.timezone}"')
 
             response = await self.graph_client.users.by_user_id(dados.endereco_agenda).events.get(request_configuration=request_config)
 
