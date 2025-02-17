@@ -56,24 +56,28 @@ async def enviar_confirmacao_consulta(data: str, data_atual: str, empresa: Empre
 
     for resposta in respostas:
         for evento in resposta.schedule_items:
-            resposta_extracao, thread_id = await extrair_dados_evento(resposta.schedule_id, evento, data_atual, empresa, db)
-            if resposta_extracao:
-                if resposta_extracao.telefone:
-                    id_contato = message_client.obter_id_contato(resposta_extracao.telefone, resposta_extracao.cliente)
-                    contato = (await obter_criar_contato(None, id_contato, empresa, message_client, None, db))[0]
-                    assistente, assistente_db_id = await obter_assistente(empresa, "confirmar", None, db)
-                    if assistente:
-                        if not contato.appointmentConfirmation:
-                            contato.appointmentConfirmation = True
-                            db.commit()
-                            await atualizar_assistente_atual_contato(contato, assistente_db_id, db)
-                        if isinstance(message_client, Digisac):
-                            message_client.encerrar_chamado(contactId=contato.contactId, ticketTopicIds=[], comments="Chamado encerrado para confirmação de consulta", byUserId=None)
-                            departamento = await obter_departamento(empresa, None, True, db)
-                            if departamento:
-                                await transferir_contato(message_client, contato, departamento)
-                        await direcionar(resposta_extracao.resposta_confirmacao, False, message_client, None, None, empresa, contato, assistente, db)
-                        await atualizar_thread_contato(contato, thread_id, db)
+            try:
+                resposta_extracao, thread_id = await extrair_dados_evento(resposta.schedule_id, evento, data_atual, empresa, db)
+                if resposta_extracao:
+                    if resposta_extracao.telefone:
+                        id_contato = message_client.obter_id_contato(resposta_extracao.telefone, resposta_extracao.cliente)
+                        if id_contato:
+                            contato = (await obter_criar_contato(None, id_contato, empresa, message_client, None, db))[0]
+                            assistente, assistente_db_id = await obter_assistente(empresa, "confirmar", None, db)
+                            if assistente:
+                                if not contato.appointmentConfirmation:
+                                    contato.appointmentConfirmation = True
+                                    db.commit()
+                                    await atualizar_assistente_atual_contato(contato, assistente_db_id, db)
+                                if isinstance(message_client, Digisac):
+                                    message_client.encerrar_chamado(contactId=contato.contactId, ticketTopicIds=[], comments="Chamado encerrado para confirmação de consulta", byUserId=None)
+                                    departamento = await obter_departamento(empresa, None, True, db)
+                                    if departamento:
+                                        await transferir_contato(message_client, contato, departamento)
+                                await direcionar(resposta_extracao.resposta_confirmacao, False, message_client, None, None, empresa, contato, assistente, db)
+                                await atualizar_thread_contato(contato, thread_id, db)
+            except Exception as e:
+                print(f"Erro ao processar evento {evento}: {e}")
 
 
 async def enviar_aviso_vencimento(data_cobranca: str, data_atual: str, empresa: Empresa, db: Session):
