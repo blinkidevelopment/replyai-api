@@ -1,11 +1,13 @@
 import os
+import multiprocessing
 
-from fastapi import APIRouter, Request, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Request, HTTPException
 from fastapi.params import Depends
 from sqlalchemy.orm import Session
 
 from app.db.database import obter_sessao
-from app.jobs.jobs import retomar_conversa, confirmar_agendamento, avisar_vencimento, cobrar_inadimplentes
+from app.jobs.jobs import rodar_confirmar_agendamento, rodar_avisar_vencimento, rodar_cobrar_inadimplentes, \
+    rodar_retomar_conversa
 from app.jobs.sub_jobs import processar_cobranca, processar_nf
 from app.schemas.asaas_schema import AsaasPaymentRequest, AsaasInvoiceRequest
 from app.services.cobranca_service import criar_financial_client
@@ -24,22 +26,30 @@ router = APIRouter(dependencies=[Depends(verificar_chave_secreta)])
 
 @router.post("/retomar_conversas")
 async def executar_retomar_conversa():
-    await retomar_conversa()
-    return {"status": "Trabalho [retomar_conversas] executado com sucesso"}
+    process = multiprocessing.Process(target=rodar_retomar_conversa)
+    process.start()
+
+    return {"status": "Trabalho [retomar_conversas] iniciado com sucesso"}
 
 @router.post("/confirmar_agendamentos")
-async def executar_confirmar_agendamento(background_tasks: BackgroundTasks):
-    background_tasks.add_task(confirmar_agendamento)
+async def executar_confirmar_agendamento():
+    process = multiprocessing.Process(target=rodar_confirmar_agendamento)
+    process.start()
+
     return {"status": "Trabalho [confirmar_agendamentos] iniciado com sucesso"}
 
 @router.post("/avisar_vencimentos")
-async def executar_avisar_vencimento(background_tasks: BackgroundTasks):
-    background_tasks.add_task(avisar_vencimento)
+async def executar_avisar_vencimento():
+    process = multiprocessing.Process(target=rodar_avisar_vencimento)
+    process.start()
+
     return {"status": "Trabalho [avisar_vencimentos] iniciado com sucesso"}
 
 @router.post("/cobrar_inadimplentes")
-async def executar_cobrar_inadimplente(background_tasks: BackgroundTasks):
-    background_tasks.add_task(cobrar_inadimplentes)
+async def executar_cobrar_inadimplente():
+    process = multiprocessing.Process(target=rodar_cobrar_inadimplentes)
+    process.start()
+
     return {"status": "Trabalho [cobrar_inadimplentes] iniciado com sucesso"}
 
 @router.post("/agradecer_pagamento/asaas/{slug}/{token}/{client_number}")

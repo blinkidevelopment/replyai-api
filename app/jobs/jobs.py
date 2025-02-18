@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-
+import asyncio
 import pytz
 from sqlalchemy import or_, and_
 
@@ -7,6 +7,19 @@ from app.db.database import retornar_sessao
 from app.db.models import Empresa, Contato
 from app.jobs.sub_jobs import enviar_retomada_conversa, enviar_confirmacao_consulta, enviar_aviso_vencimento, \
     enviar_cobranca_inadimplente
+
+
+def rodar_retomar_conversa():
+    asyncio.run(retomar_conversa())
+
+def rodar_confirmar_agendamento():
+    asyncio.run(confirmar_agendamento())
+
+def rodar_avisar_vencimento():
+    asyncio.run(avisar_vencimento())
+
+def rodar_cobrar_inadimplentes():
+    asyncio.run(cobrar_inadimplentes())
 
 
 async def retomar_conversa():
