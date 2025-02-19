@@ -4,8 +4,7 @@ import pytz
 from googleapiclient.discovery import build
 from google.oauth2.service_account import Credentials
 
-from app.utils.agenda_client import AgendaClient, Schedule
-from app.utils.assistant import RespostaTituloAgenda, RespostaTituloAgendaDataNova
+from app.utils.agenda_client import AgendaClient, Schedule, EventoTituloAgenda, EventoTituloAgendaDataNova
 
 
 class GoogleCalendar(AgendaClient):
@@ -81,7 +80,7 @@ class GoogleCalendar(AgendaClient):
         evento_cadastrado = self.service.events().insert(calendarId=agenda, body=evento).execute()
         return evento_cadastrado
 
-    async def confirmar_evento(self, dados: RespostaTituloAgenda):
+    async def confirmar_evento(self, dados: EventoTituloAgenda):
         try:
             eventos = self.service.events().list(
                 calendarId=dados.endereco_agenda,
@@ -103,7 +102,7 @@ class GoogleCalendar(AgendaClient):
             print(e)
         return False
 
-    async def reagendar_evento(self, dados: RespostaTituloAgendaDataNova):
+    async def reagendar_evento(self, dados: EventoTituloAgendaDataNova):
         try:
             eventos = self.service.events().list(
                 calendarId=dados.endereco_agenda,
@@ -137,7 +136,7 @@ class GoogleCalendar(AgendaClient):
             print(e)
         return False
 
-    async def cancelar_evento(self, dados: RespostaTituloAgenda, tipo_cancelamento: str):
+    async def cancelar_evento(self, dados: EventoTituloAgenda, tipo_cancelamento: str):
         try:
             eventos = self.service.events().list(
                 calendarId=dados.endereco_agenda,

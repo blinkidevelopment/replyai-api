@@ -11,8 +11,7 @@ from msgraph.generated.models.date_time_time_zone import DateTimeTimeZone
 from kiota_abstractions.base_request_configuration import RequestConfiguration
 from msgraph.generated.users.item.events.events_request_builder import EventsRequestBuilder
 
-from app.utils.agenda_client import AgendaClient, Schedule
-from app.utils.assistant import RespostaTituloAgenda, RespostaTituloAgendaDataNova
+from app.utils.agenda_client import AgendaClient, Schedule, EventoTituloAgenda, EventoTituloAgendaDataNova
 
 
 class Outlook(AgendaClient):
@@ -75,7 +74,7 @@ class Outlook(AgendaClient):
             print(e)
             return False
 
-    async def confirmar_evento(self, dados: RespostaTituloAgenda):
+    async def confirmar_evento(self, dados: EventoTituloAgenda):
         try:
             query_params = EventsRequestBuilder.EventsRequestBuilderGetQueryParameters(
                 select=["start", "end", "subject", "id", "location"],
@@ -100,7 +99,7 @@ class Outlook(AgendaClient):
             print(e)
         return False
 
-    async def reagendar_evento(self, dados: RespostaTituloAgendaDataNova):
+    async def reagendar_evento(self, dados: EventoTituloAgendaDataNova):
         try:
             query_params = EventsRequestBuilder.EventsRequestBuilderGetQueryParameters(
                 select=["start", "end", "subject", "id", "location"],
@@ -129,7 +128,7 @@ class Outlook(AgendaClient):
             print(e)
         return False
 
-    async def cancelar_evento(self, dados: RespostaTituloAgenda, tipo_cancelamento: str):
+    async def cancelar_evento(self, dados: EventoTituloAgenda, tipo_cancelamento: str):
         try:
             query_params = EventsRequestBuilder.EventsRequestBuilderGetQueryParameters(
                 select=["start", "end", "subject", "id", "location"],

@@ -256,9 +256,18 @@ class Assistant:
                 continue
         raise Exception(f"AIResponseError: Falha ao gerar uma resposta após {max_tentantivas} tentativas")
 
-    def listar_mensagens_thread(self, thread_id: str):
-        mensagens = self.client.beta.threads.messages.list(thread_id)
+    def listar_mensagens_thread(self, thread_id: str, ordem: str, limite: int):
+        mensagens = self.client.beta.threads.messages.list(thread_id, order=ordem, limit=limite)
         return mensagens
+
+    def obter_mensagem_thread(self, thread_id: str, index: int, ordem: str, limite: int):
+        try:
+            mensagens = self.listar_mensagens_thread(thread_id, ordem, limite)
+            if mensagens:
+                return mensagens.data[index].content[0].text.value
+        except Exception as e:
+            print(f"Erro ao obter mensagem da thread: {e}")
+        return None
 
     def obter_arquivo(self, file_id: str):
         try:
@@ -368,38 +377,6 @@ class RespostaConfirmacao:
         )
 
 
-class RespostaTituloAgenda:
-    def __init__(self, endereco_agenda: str, titulo: str, start_datetime: str):
-        self.endereco_agenda = endereco_agenda
-        self.titulo = titulo
-        self.start_datetime = start_datetime
-
-    @classmethod
-    def from_dict(cls, data: dict):
-        return cls(
-            endereco_agenda=data["endereco_agenda"],
-            titulo=data["titulo"],
-            start_datetime=data["start_datetime"]
-        )
-
-
-class RespostaTituloAgendaDataNova:
-    def __init__(self, endereco_agenda: str, titulo: str, start_datetime: str, data_nova: str):
-        self.endereco_agenda = endereco_agenda
-        self.titulo = titulo
-        self.start_datetime = start_datetime
-        self.data_nova = data_nova
-
-    @classmethod
-    def from_dict(cls, data: dict):
-        return cls(
-            endereco_agenda=data["endereco_agenda"],
-            titulo=data["titulo"],
-            start_datetime=data["start_datetime"],
-            data_nova=data["data_nova"]
-        )
-
-
 class RespostaFinanceiro:
     def __init__(self, telefone: str, resposta: Resposta):
         self.telefone = telefone
@@ -427,7 +404,7 @@ class Instrucao:
 
     def __str__(self):
         import json
-        return json.dumps(self.to_dict(), indent=2)
+        return json.dumps(self.to_dict(), indent=2, ensure_ascii=False)
 
 
 

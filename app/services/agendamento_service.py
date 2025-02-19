@@ -4,8 +4,8 @@ import json
 from sqlalchemy.orm import Session
 
 from app.db.models import Contato, Assistente, Empresa, OutlookClient, GoogleCalendarClient
-from app.utils.agenda_client import AgendaClient
-from app.utils.assistant import Assistant, Instrucao, RespostaDataSugerida, RespostaAgendamento, RespostaConfirmacao, RespostaTituloAgenda, RespostaTituloAgendaDataNova
+from app.utils.agenda_client import AgendaClient, EventoTituloAgenda, EventoTituloAgendaDataNova
+from app.utils.assistant import Assistant, Instrucao, RespostaDataSugerida, RespostaAgendamento, RespostaConfirmacao
 from app.utils.google_calendar import GoogleCalendar
 from app.utils.outlook import Outlook
 
@@ -145,14 +145,40 @@ async def extrair_dados_evento(
     return {}, None
 
 
-async def extrair_titulo_agenda_evento(
+async def obter_titulo_agenda_evento(
+        assistente: Assistant,
+        contato: Contato,
+        data_nova: str | None = None
+):
+    mensagem = assistente.obter_mensagem_thread(contato.threadId, 0, "asc", 1)
+    if mensagem:
+        mensagem_dict = json.loads(mensagem)
+        dados_dict = mensagem_dict.get("dados", {})
+        if dados_dict:
+            if not data_nova:
+                dados = EventoTituloAgenda(
+                    endereco_agenda=dados_dict.get("email_agenda", ""),
+                    titulo=dados_dict.get("titulo", ""),
+                    start_datetime=dados_dict.get("data_hora_inicio", "")
+                )
+            else:
+                dados = EventoTituloAgendaDataNova(
+                    endereco_agenda=dados_dict.get("email_agenda", ""),
+                    titulo=dados_dict.get("titulo", ""),
+                    start_datetime=dados_dict.get("data_hora_inicio", ""),
+                    data_nova=data_nova
+                )
+            return dados
+    return None
+
+
+async def obter_nova_data_reagendamento(
         thread_id: str,
         empresa: Empresa,
-        db: Session,
-        reagendamento: bool = False
+        db: Session
 ):
     instrucao = Instrucao(
-        acao="extrair_titulo_agenda_evento" if not reagendamento else "extrair_titulo_agenda_nova_data",
+        acao="obter_nova_data_reagendamento",
         dados=None
     )
 
@@ -163,11 +189,8 @@ async def extrair_titulo_agenda_evento(
         assistente.adicionar_mensagens(mensagens=[instrucao.__str__()], id_arquivos=[], thread_id=thread_id)
         resposta, _ = assistente.criar_rodar_thread(thread_id)
 
-        if reagendamento:
-            resposta_obj = RespostaTituloAgendaDataNova.from_dict(json.loads(resposta))
-        else:
-            resposta_obj = RespostaTituloAgenda.from_dict(json.loads(resposta))
-        return resposta_obj
+        resposta_dict = json.loads(resposta)
+        return resposta_dict.get("nova_data", "")
     return None
 
 

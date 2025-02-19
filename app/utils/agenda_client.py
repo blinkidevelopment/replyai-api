@@ -5,7 +5,37 @@ from typing import List
 import pytz
 from msgraph.generated.models.schedule_information import ScheduleInformation
 
-from app.utils.assistant import RespostaTituloAgenda, RespostaTituloAgendaDataNova
+
+class EventoTituloAgenda:
+    def __init__(self, endereco_agenda: str, titulo: str, start_datetime: str):
+        self.endereco_agenda = endereco_agenda
+        self.titulo = titulo
+        self.start_datetime = start_datetime
+
+    @classmethod
+    def from_dict(cls, data: dict):
+        return cls(
+            endereco_agenda=data["endereco_agenda"],
+            titulo=data["titulo"],
+            start_datetime=data["start_datetime"]
+        )
+
+
+class EventoTituloAgendaDataNova:
+    def __init__(self, endereco_agenda: str, titulo: str, start_datetime: str, data_nova: str):
+        self.endereco_agenda = endereco_agenda
+        self.titulo = titulo
+        self.start_datetime = start_datetime
+        self.data_nova = data_nova
+
+    @classmethod
+    def from_dict(cls, data: dict):
+        return cls(
+            endereco_agenda=data["endereco_agenda"],
+            titulo=data["titulo"],
+            start_datetime=data["start_datetime"],
+            data_nova=data["data_nova"]
+        )
 
 
 class AgendaClient(ABC):
@@ -18,15 +48,15 @@ class AgendaClient(ABC):
         pass
 
     @abstractmethod
-    def confirmar_evento(self, dados: RespostaTituloAgenda):
+    def confirmar_evento(self, dados: EventoTituloAgenda):
         pass
 
     @abstractmethod
-    def reagendar_evento(self, dados: RespostaTituloAgendaDataNova):
+    def reagendar_evento(self, dados: EventoTituloAgendaDataNova):
         pass
 
     @abstractmethod
-    def cancelar_evento(self, dados: RespostaTituloAgenda, tipo_cancelamento: str):
+    def cancelar_evento(self, dados: EventoTituloAgenda, tipo_cancelamento: str):
         pass
 
 

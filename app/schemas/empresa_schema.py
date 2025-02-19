@@ -73,7 +73,7 @@ class DigisacClientSchema(BaseModel):
     departamentos: Optional[List[DepartamentoSchema]]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class VozSchema(BaseModel):
     id: int
@@ -83,7 +83,7 @@ class VozSchema(BaseModel):
     style: float
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class AssistenteSchema(BaseModel):
     id: int
@@ -94,7 +94,7 @@ class AssistenteSchema(BaseModel):
     voz: Optional[VozSchema]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class ColaboradorSchema(BaseModel):
     id: int
@@ -103,7 +103,7 @@ class ColaboradorSchema(BaseModel):
     departamento: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class MidiaSchema(BaseModel):
     id: int
@@ -115,7 +115,7 @@ class MidiaSchema(BaseModel):
     ordem: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class UsuarioSchema(BaseModel):
     id: int
@@ -164,7 +164,7 @@ class EmpresaSchema(BaseModel):
     asaas_client: Optional[List[AsaasClientSchema]]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class EmpresaMinSchema(BaseModel):
     id: int
@@ -172,7 +172,7 @@ class EmpresaMinSchema(BaseModel):
     nome: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class ListaUsuariosSchema(BaseModel):
     has_more: bool
