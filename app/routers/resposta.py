@@ -22,9 +22,8 @@ async def responder(
         token: str,
         db: Session = Depends(obter_sessao)
 ):
+    resultado = False
     try:
-        resultado = False
-
         if isinstance(request, EvolutionAPIRequest):
             if request.data.key.fromMe:
                 empresa = (await obter_empresa(slug, token, db))[0]
@@ -53,7 +52,6 @@ async def responder(
             resposta = await executar_thread(mensagem, imagem, contato, dados_contato, assistente, db)
             await direcionar(resposta, audio, message_client, agenda_client, crm_client, empresa, contato, assistente, db)
             resultado = True
-        return resultado
     except Exception as e:
         if "AIResponseError" in str(e):
             dados_empresa = await obter_empresa(slug, token, db)
@@ -62,4 +60,5 @@ async def responder(
                 contato, assistente, _ = await obter_criar_contato(request, None, empresa, message_client, crm_client, db)
                 await enviar_mensagem(empresa.mensagem_erro_ia, False, None, contato, None, message_client, assistente, db)
             pass
-        return {"erro": str(e)}
+        print(f"Ocorreu um erro: {e}")
+    return resultado
