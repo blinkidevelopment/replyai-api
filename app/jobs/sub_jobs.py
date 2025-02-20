@@ -115,7 +115,7 @@ async def processar_cobranca(acao: str, cobranca: dict, data_atual: str, enviar_
     try:
         cliente = financial_client.obter_cliente(id_cliente=cobranca.get("customer", ""))
         if cliente:
-            telefone = cliente.get("phone", "")
+            telefone = cliente.get("mobilePhone", "")
             nome = cliente.get("name", "")
             data_vencimento = cobranca.get("dueDate", "")
             descricao_boleto = cobranca.get("description", "")
@@ -148,7 +148,7 @@ async def processar_nf(acao: str, nota: dict, data_atual: str, empresa: Empresa,
     try:
         cliente = financial_client.obter_cliente(id_cliente=nota.get("customer", ""))
         if cliente:
-            telefone = cliente.get("phone", "")
+            telefone = cliente.get("mobilePhone", "")
             nome = cliente.get("name", "")
             url_nota = nota.get("pdfUrl", "")
             if url_nota:
