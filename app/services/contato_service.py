@@ -85,6 +85,10 @@ async def criar_contato(contact_id: str, id_negociacao: str | None, empresa: Emp
     return None
 
 
+async def obter_id_contato(message_client: MessageClient, telefone: str, nome_contato: str):
+    id_contato = message_client.obter_id_contato(telefone, nome_contato)
+    return id_contato
+
 
 async def atualizar_assistente_atual_contato(contato: Contato, id_assistente: int, db: Session):
     contato.assistenteAtual = id_assistente

@@ -168,7 +168,7 @@ class Digisac(MessageClient):
                     id_contato = data[0].get("id", None)
 
         if id_contato is None:
-            resposta_cadastro = requests.post(endpoint, headers=self.headers, data={
+            resposta_cadastro = requests.post(endpoint, headers=self.headers, json={
                 "serviceId": self.service_id,
                 "internalName": nome_contato,
                 "alternativeName": nome_contato,

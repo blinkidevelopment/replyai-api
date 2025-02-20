@@ -4,7 +4,7 @@ from app.db.models import Contato, Empresa, Agenda
 from app.services.agendamento_service import extrair_dados_evento, criar_agenda_client
 from app.services.cobranca_service import extrair_dados_cobranca, criar_financial_client
 from app.services.contato_service import redefinir_contato, obter_criar_contato, atualizar_thread_contato, \
-    atualizar_assistente_atual_contato, transferir_contato
+    atualizar_assistente_atual_contato, transferir_contato, obter_id_contato
 from app.services.direcionamento_service import direcionar
 from app.services.empresa_service import obter_assistente, obter_departamento
 from app.services.mensagem_service import criar_message_client
@@ -65,7 +65,7 @@ async def enviar_confirmacao_consulta(data: str, data_atual: str, empresa: Empre
                 if resposta_extracao:
                     if resposta_extracao.telefone:
                         try:
-                            id_contato = message_client.obter_id_contato(resposta_extracao.telefone, resposta_extracao.cliente)
+                            id_contato = await obter_id_contato(message_client, resposta_extracao.telefone, resposta_extracao.cliente)
                             if id_contato:
                                 contato = (await obter_criar_contato(None, id_contato, empresa, message_client, None, db))[0]
                                 assistente, assistente_db_id = await obter_assistente(empresa, "confirmar", None, db)
@@ -124,7 +124,7 @@ async def processar_cobranca(acao: str, cobranca: dict, data_atual: str, enviar_
 
             if resposta_vencimento:
                 assistente, assistente_db_id = await obter_assistente(empresa, "cobrar", None, db)
-                id_contato = message_client.obter_id_contato(resposta_vencimento.telefone, nome)
+                id_contato = await obter_id_contato(message_client, resposta_vencimento.telefone, nome)
                 contato = (await obter_criar_contato(None, id_contato, empresa, message_client, None, db))[0]
                 await atualizar_assistente_atual_contato(contato, assistente_db_id, db)
                 await direcionar(resposta_vencimento.resposta, False, message_client, None, None, empresa, contato,
@@ -158,7 +158,7 @@ async def processar_nf(acao: str, nota: dict, data_atual: str, empresa: Empresa,
                                                                                   "", empresa, db)
                     if resposta_vencimento:
                         assistente, assistente_db_id = await obter_assistente(empresa, "cobrar", None, db)
-                        id_contato = message_client.obter_id_contato(resposta_vencimento.telefone, nome)
+                        id_contato = await obter_id_contato(message_client, resposta_vencimento.telefone, nome)
                         contato = (await obter_criar_contato(None, id_contato, empresa, message_client, None, db))[0]
                         await atualizar_assistente_atual_contato(contato, assistente_db_id, db)
                         await direcionar(resposta_vencimento.resposta, False, message_client, None, None, empresa, contato,
