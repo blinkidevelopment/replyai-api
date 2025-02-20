@@ -70,6 +70,7 @@ def retornar_sessao():
         db = SessionLocal()
         try:
             yield db
+            return
         except (psycopg2.OperationalError, OperationalError) as e:
             db.rollback()
             print(f"Erro de conexão com o banco: {e}. Tentativa {tentativas + 1} de {MAX_RETRIES}")
