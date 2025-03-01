@@ -27,7 +27,6 @@ async def criar_midia(
         mimetype = arquivo.content_type
         midia = Midia(
             url=url,
-            tipo="",
             mediatype=mimetype,
             nome=nome,
             atalho=request.atalho,
