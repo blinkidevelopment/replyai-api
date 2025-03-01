@@ -197,3 +197,73 @@ class Digisac(MessageClient):
             resposta_obj = json.loads(resposta.content)
             return resposta_obj.get("origin", None)
         return None
+
+    def listar_usuarios(self, pagina: int, nome: str | None, id: str | None = None):
+        endpoint = f"{self.base_url}/users"
+
+        query_param = {
+            "where": {
+                "archivedAt": {"$eq": None}
+            },
+            "order": [["name", "asc"]]
+        }
+
+        if id:
+            query_param["where"]["id"] = {"$eq": id}
+        elif nome:
+            query_param["where"]["name"] = {"$iLike": f"%{nome}%"}
+
+        params = {
+            "page": pagina,
+            "query": json.dumps(query_param)
+        }
+
+        response = requests.get(endpoint, headers=self.headers, params=params)
+        return response.json()
+
+    def listar_departamentos(self, pagina: int, nome: str | None, id: str | None = None):
+        endpoint = f"{self.base_url}/departments"
+
+        query_param = {
+            "where": {
+                "archivedAt": {"$eq": None}
+            },
+            "order": [["name", "asc"]]
+        }
+
+        if id:
+            query_param["where"]["id"] = {"$eq": id}
+        elif nome:
+            query_param["where"]["name"] = {"$iLike": f"%{nome}%"}
+
+        params = {
+            "page": pagina,
+            "query": json.dumps(query_param)
+        }
+
+        response = requests.get(endpoint, headers=self.headers, params=params)
+        return response.json()
+
+    def listar_servicos(self, pagina: int, nome: str | None, id: str | None = None):
+        endpoint = f"{self.base_url}/services"
+
+        query_param = {
+            "where": {
+                "archivedAt": {"$eq": None},
+                "type": {"$eq": "whatsapp"}
+            },
+            "order": [["name", "asc"]]
+        }
+
+        if id:
+            query_param["where"]["id"] = {"$eq": id}
+        elif nome:
+            query_param["where"]["name"] = {"$iLike": f"%{nome}%"}
+
+        params = {
+            "page": pagina,
+            "query": json.dumps(query_param)
+        }
+
+        response = requests.get(endpoint, headers=self.headers, params=params)
+        return response.json()

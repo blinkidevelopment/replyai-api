@@ -1,33 +1,40 @@
+import os
 from datetime import datetime, timedelta
 
 import pytz
 from googleapiclient.discovery import build
-from google.oauth2.service_account import Credentials
+from google.oauth2.credentials import Credentials
+from google.auth.transport.requests import Request
+from sqlalchemy.orm import Session
 
+from app.db.models import GoogleCalendarClient
 from app.utils.agenda_client import AgendaClient, Schedule, EventoTituloAgenda, EventoTituloAgendaDataNova
 
 
 class GoogleCalendar(AgendaClient):
-    def __init__(self, project_id: str, private_key_id: str, private_key: str, client_email: str, client_id: str,
-                 client_x509_cert_url: str, api_key: str, hora_inicio_agenda: str, hora_final_agenda: str, timezone: str,
-                 duracao_evento: int):
-        creds = Credentials.from_service_account_info(
-            {
-                "type": "service_account",
-                "project_id": project_id,
-                "private_key_id": private_key_id,
-                "private_key": private_key.replace("\\n", "\n"),
-                "client_email": client_email,
-                "client_id": client_id,
-                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+    def __init__(self, access_token: str, refresh_token: str, duracao_evento: int, hora_inicio_agenda: str, hora_final_agenda: str, timezone: str, client_db: GoogleCalendarClient, db: Session):
+        creds = Credentials.from_authorized_user_info(
+            info={
+                "access_token": access_token,
+                "refresh_token": refresh_token,
+                "client_id": os.getenv("GOOGLE_CLIENT_ID"),
+                "client_secret": os.getenv("GOOGLE_CLIENT_SECRET"),
                 "token_uri": "https://oauth2.googleapis.com/token",
-                "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-                "client_x509_cert_url": client_x509_cert_url,
-                "universe_domain": "googleapis.com"
-            },
-            scopes=["https://www.googleapis.com/auth/calendar"]
+                "scopes": ["https://www.googleapis.com/auth/calendar"]
+            }
         )
-        self.api_key = api_key
+
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+
+            if creds.token != access_token:
+                access_token = creds.token
+                refresh_token = creds.refresh_token if creds.refresh_token else refresh_token
+
+                client_db.refresh_token = refresh_token,
+                client_db.access_token = access_token,
+                db.commit()
+
         self.service = build("calendar", "v3", credentials=creds)
         self.hora_inicio_agenda = hora_inicio_agenda
         self.hora_final_agenda = hora_final_agenda

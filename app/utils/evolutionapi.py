@@ -25,7 +25,7 @@ class EvolutionAPI(MessageClient):
         contact_id = kwargs.get("contact_id", "")
         mensagem = kwargs.get("mensagem")
         base64 = kwargs.get("base64", None)
-        mediatype = kwargs.get("mediatype", None)
+        mediatype = kwargs.get("mediatype", "")
         nome_arquivo = kwargs.get("nome_arquivo", "")
         nome_assistente = kwargs.get("nome_assistente", self.defaultAssistantName)
         numero = re.match(r"(\d+)@", contact_id).group(1)
@@ -35,11 +35,18 @@ class EvolutionAPI(MessageClient):
         }
 
         if base64 is not None:
-            if mediatype == "audio":
+            if mediatype.startswith("audio/"):
                 endpoint = f"{self.base_url}/message/sendWhatsAppAudio/{self.instance}"
                 request["audioMessage"] = {"audio": base64}
                 request["options"] = {"encoding": False}
             else:
+                if mediatype.startswith("image/"):
+                    mediatype = "image"
+                elif mediatype.startswith("video/"):
+                    mediatype = "video"
+                else:
+                    mediatype = "document"
+
                 endpoint = f"{self.base_url}/message/sendMedia/{self.instance}"
                 request["mediaMessage"] = {
                     "mediatype": mediatype,
@@ -86,3 +93,66 @@ class EvolutionAPI(MessageClient):
 
     def baixar_arquivo(self, url: str):
         return super().baixar_arquivo(url)
+
+    def criar_instancia(self, global_api_key: str, nome_instancia: str):
+        endpoint = f"{self.base_url}/instance/create"
+
+        request = {
+            "instanceName": nome_instancia,
+            "integration": "WHATSAPP-BAILEYS"
+        }
+
+        headers = {
+            "apikey": global_api_key,
+            "Content-Type": "application/json"
+        }
+
+        resposta = requests.post(endpoint, headers=headers, json=request)
+        return resposta
+
+    def retornar_instancia(self):
+        endpoint = f"{self.base_url}/instance/fetchInstances"
+        resposta = requests.get(endpoint, headers=self.headers, params={
+            "instanceName": self.instance
+        })
+        return resposta
+
+    def conectar_instancia(self):
+        endpoint = f"{self.base_url}/instance/connect/{self.instance}"
+        resposta = requests.get(endpoint, headers=self.headers)
+        return resposta
+
+    def reiniciar_instancia(self):
+        endpoint = f"{self.base_url}/instance/restart/{self.instance}"
+        resposta = requests.put(endpoint, headers=self.headers)
+        return resposta
+
+    def desligar_instancia(self):
+        endpoint = f"{self.base_url}/instance/logout/{self.instance}"
+        resposta = requests.delete(endpoint, headers=self.headers)
+        return resposta
+
+    def checar_conexao(self):
+        endpoint = f"{self.base_url}/instance/connectionState/{self.instance}"
+        resposta = requests.get(endpoint, headers=self.headers)
+        return resposta
+
+    def adicionar_webhook(self, webhook_url: str, habilitado: bool):
+        endpoint = f"{self.base_url}/webhook/set/{self.instance}"
+
+        request = {
+            "url": webhook_url,
+            "events": [
+                "MESSAGES_UPSERT"
+            ],
+            "webhook_base64": True,
+            "enabled": habilitado
+        }
+
+        resposta = requests.post(endpoint, headers=self.headers, json=request)
+        return resposta
+
+    def listar_webhooks(self):
+        endpoint = f"{self.base_url}/webhook/find/{self.instance}"
+        resposta = requests.get(endpoint, headers=self.headers)
+        return resposta
