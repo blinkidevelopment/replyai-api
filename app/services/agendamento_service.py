@@ -199,28 +199,27 @@ def criar_agenda_client(empresa: Empresa, db: Session):
         outlook_client_db = db.query(OutlookClient).filter_by(id_empresa=empresa.id).first()
         if outlook_client_db:
             return Outlook(
-                clientId=outlook_client_db.clientId,
-                tenantId=outlook_client_db.tenantId,
-                clientSecret=outlook_client_db.clientSecret,
-                duracaoEvento=outlook_client_db.duracaoEvento,
+                access_token=outlook_client_db.access_token,
+                refresh_token=outlook_client_db.refresh_token,
+                expires_in=outlook_client_db.expires_in,
                 usuarioPadrao=outlook_client_db.usuarioPadrao,
-                horaInicioAgenda=outlook_client_db.horaInicioAgenda,
-                horaFinalAgenda=outlook_client_db.horaFinalAgenda,
-                timeZone=outlook_client_db.timeZone
+                duracaoEvento=empresa.duracao_evento,
+                horaInicioAgenda=empresa.hora_inicio_agenda,
+                horaFinalAgenda=empresa.hora_final_agenda,
+                timeZone=outlook_client_db.timeZone,
+                client_db=outlook_client_db,
+                db=db
             )
     elif empresa.agenda_client_type == "google_calendar":
         googlecalendar_client_db = db.query(GoogleCalendarClient).filter_by(id_empresa=empresa.id).first()
         if googlecalendar_client_db:
             return GoogleCalendar(
-                project_id=googlecalendar_client_db.project_id,
-                private_key_id=googlecalendar_client_db.private_key_id,
-                private_key=googlecalendar_client_db.private_key,
-                client_email=googlecalendar_client_db.client_email,
-                client_id=googlecalendar_client_db.client_id,
-                client_x509_cert_url=googlecalendar_client_db.client_x509_cert_url,
-                api_key=googlecalendar_client_db.api_key,
-                hora_inicio_agenda=googlecalendar_client_db.hora_inicio_agenda,
-                hora_final_agenda=googlecalendar_client_db.hora_final_agenda,
+                access_token=googlecalendar_client_db.access_token,
+                refresh_token=googlecalendar_client_db.refresh_token,
+                duracao_evento=empresa.duracao_evento,
+                hora_inicio_agenda=empresa.hora_inicio_agenda,
+                hora_final_agenda=empresa.hora_final_agenda,
                 timezone=googlecalendar_client_db.timezone,
-                duracao_evento=googlecalendar_client_db.duracao_evento
+                client_db=googlecalendar_client_db,
+                db=db
             )

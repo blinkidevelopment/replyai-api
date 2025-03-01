@@ -7,6 +7,7 @@ from PIL import Image
 from fastapi import UploadFile
 import httpx
 from openai import OpenAI
+from openai.types.beta import FunctionToolParam
 import time
 
 from app.utils.function_utils import obter_data_hora_atual, obter_colaboradores
@@ -407,8 +408,50 @@ class Instrucao:
         return json.dumps(self.to_dict(), indent=2, ensure_ascii=False)
 
 
-
 class CustomHTTPClient(httpx.Client):
     def __init__(self, *args, **kwargs):
         kwargs.pop("proxies", None)
         super().__init__(*args, **kwargs)
+
+
+class Ferramentas:
+    @staticmethod
+    def get_current_datetime():
+        return FunctionToolParam(
+            function={
+                "name": "get_current_datetime",
+                "description": "A function to extract current date and time",
+                "strict": True,
+                "parameters": {
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": False,
+                    "required": []
+                }
+            },
+            type="function"
+        )
+
+    @staticmethod
+    def get_employees():
+        return FunctionToolParam(
+            function={
+                "name": "get_employees",
+                "description": "A function to return a list of employees",
+                "strict": True,
+                "parameters": {
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": False,
+                    "required": []
+                }
+            },
+            type="function"
+        )
+
+    @staticmethod
+    def get_all_tools():
+        return [
+            Ferramentas.get_employees(),
+            Ferramentas.get_current_datetime()
+        ]

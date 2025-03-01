@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from typing import Optional
 
 from app.db.database import obter_sessao
-from app.db.models import Usuario
+from app.db.models import Usuario, Empresa
 from app.schemas.atualizacao_empresa_schema import InformacoesUsuario
 from app.schemas.empresa_schema import ListaUsuariosSchema, UsuarioSchema
 from app.utils.password_utils import verificar_senha, criar_token, hash_senha
@@ -176,6 +176,11 @@ async def login(
 
     if not usuario:
         raise HTTPException(status_code=401, detail="Credenciais inválidas")
+
+    if usuario.id_empresa:
+        empresa = db.query(Empresa).filter_by(id=usuario.id_empresa).first()
+        if not empresa.empresa_ativa:
+            raise HTTPException(status_code=401, detail="Não foi possível fazer login pois a empresa à qual você faz parte está desativada. Entre em contato com um administrador do sistema")
 
     if not verificar_senha(form_data.password, usuario.senha):
         raise HTTPException(status_code=401, detail="Credenciais inválidas")

@@ -53,6 +53,7 @@ class Voz(Base):
     __tablename__ = "vozes"
 
     id = Column(Integer, primary_key=True, index=True)
+    nome = Column(String)
     voiceId = Column(String)
     stability = Column(Float)
     similarity_boost = Column(Float)
@@ -87,7 +88,11 @@ class Empresa(Base):
     cobrar_inadimplentes_ativo = Column(Boolean)
     tipo_cancelamento_evento = Column(String)
     mensagem_erro_ia = Column(String)
+    duracao_evento = Column(Integer)
+    hora_inicio_agenda = Column(String)
+    hora_final_agenda = Column(String)
     openai_api_key = Column(String)
+    elevenlabs_api_key = Column(String)
     assistentePadrao = Column(Integer, ForeignKey("assistentes.id"))
 
     assistente = relationship("Assistente", backref="assistente_padrao", foreign_keys=[assistentePadrao])
@@ -109,7 +114,6 @@ class Midia(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     url = Column(String)
-    tipo = Column(String)
     mediatype = Column(String)
     nome = Column(String)
     atalho = Column(String)
@@ -173,13 +177,10 @@ class OutlookClient(Base):
     __tablename__ = "outlook_clients"
 
     id = Column(Integer, primary_key=True, index=True)
-    clientId = Column(String)
-    tenantId = Column(String)
-    clientSecret = Column(String)
-    duracaoEvento = Column(Integer)
+    access_token = Column(String)
+    refresh_token = Column(String)
+    expires_in = Column(Integer)
     usuarioPadrao = Column(String)
-    horaInicioAgenda = Column(String)
-    horaFinalAgenda = Column(String)
     timeZone = Column(String)
     id_empresa = Column(Integer, ForeignKey("empresas.id"))
 
@@ -190,16 +191,10 @@ class GoogleCalendarClient(Base):
     __tablename__ = "googlecalendar_clients"
 
     id = Column(Integer, primary_key=True, index=True)
-    project_id = Column(String)
-    private_key_id = Column(String)
-    private_key = Column(String)
+    access_token = Column(String)
+    refresh_token = Column(String)
+    expires_in = Column(Integer)
     client_email = Column(String)
-    client_id = Column(String)
-    client_x509_cert_url = Column(String)
-    api_key = Column(String)
-    duracao_evento = Column(Integer)
-    hora_inicio_agenda = Column(String)
-    hora_final_agenda = Column(String)
     timezone = Column(String)
     id_empresa = Column(Integer, ForeignKey("empresas.id"))
 

@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Literal
 
 
 class AsaasClientSchema(BaseModel):
@@ -27,28 +27,13 @@ class AgendaSchema(BaseModel):
     atalho: str
 
 class GoogleCalendarClientSchema(BaseModel):
-    id: int
-    project_id: str
-    private_key_id: str
-    private_key: str
+    id: Optional[int] = None
     client_email: str
-    client_id: str
-    client_x509_cert_url: str
-    api_key: str
-    duracao_evento: int
-    hora_inicio_agenda: str
-    hora_final_agenda: str
     timezone: str
 
 class OutlookClientSchema(BaseModel):
-    id: int
-    clientId: str
-    tenantId: str
-    clientSecret: str
-    duracaoEvento: int
+    id: Optional[int] = None
     usuarioPadrao: str
-    horaInicioAgenda: str
-    horaFinalAgenda: str
     timeZone: str
 
 class EvolutionAPIClientSchema(BaseModel):
@@ -77,6 +62,7 @@ class DigisacClientSchema(BaseModel):
 
 class VozSchema(BaseModel):
     id: int
+    nome: str
     voiceId: str
     stability: float
     similarity_boost: float
@@ -89,7 +75,7 @@ class AssistenteSchema(BaseModel):
     id: int
     assistantId: str
     nome: str
-    proposito: str
+    proposito: Literal["responder", "agendar", "retomar", "confirmar", "reescrever", "cobrar"]
     atalho: str
     voz: Optional[VozSchema]
 
@@ -108,7 +94,6 @@ class ColaboradorSchema(BaseModel):
 class MidiaSchema(BaseModel):
     id: int
     url: str
-    tipo: str
     mediatype: str
     nome: str
     atalho: str
@@ -135,6 +120,8 @@ class EmpresaSchema(BaseModel):
     token: str
     fuso_horario: str
     empresa_ativa: bool
+    openai_api_key: str
+    elevenlabs_api_key: str
     message_client_type: Optional[str]
     agenda_client_type: Optional[str]
     crm_client_type: Optional[str]
@@ -150,6 +137,9 @@ class EmpresaSchema(BaseModel):
     cobrar_inadimplentes_ativo: Optional[bool]
     tipo_cancelamento_evento: Optional[str]
     mensagem_erro_ia: Optional[str]
+    duracao_evento: Optional[int]
+    hora_inicio_agenda: Optional[str]
+    hora_final_agenda: Optional[str]
     assistentes: List[AssistenteSchema]
     colaboradores: List[ColaboradorSchema]
     midias: List[MidiaSchema]

@@ -6,19 +6,13 @@ from fastapi.params import Depends
 from sqlalchemy.orm import Session
 
 from app.db.database import obter_sessao
-from app.db.models import Empresa, Assistente, DigisacClient, EvolutionAPIClient, Departamento, OutlookClient, \
-    GoogleCalendarClient, RDStationCRMClient, RDStationCRMDealStage, AsaasClient, Agenda, Usuario, Voz, Colaborador, \
-    Midia
+from app.db.models import Empresa, Assistente, RDStationCRMClient, RDStationCRMDealStage, AsaasClient, Usuario, Colaborador
 from app.routers.usuario import obter_usuario_logado
-from app.schemas.atualizacao_empresa_schema import InformacoesBasicas, InformacoesMensagens, InformacoesDigisac, \
-    InformacoesEvolutionAPI, InformacoesDepartamento, InformacoesAgenda, InformacoesOutlook, InformacoesGoogleCalendar, \
-    InformacoesAssistentes, InformacoesCRM, InformacoesRDStationCRMClient, InformacoesRDStationDealStage, \
-    InformacoesFinanceiras, InformacoesAsaas, InformacoesAssistente, InformacoesAgendaUnica, InformacoesVoz, \
-    InformacoesCriarEmpresa, InformacoesColaborador, InformacoesMidia
-from app.schemas.empresa_schema import EmpresaSchema, AgendaSchema, DepartamentoSchema, AssistenteSchema, \
-    DigisacClientSchema, EvolutionAPIClientSchema, OutlookClientSchema, GoogleCalendarClientSchema, \
-    RDStationCRMClientSchema, RDStationCRMDealStageSchema, AsaasClientSchema, VozSchema, EmpresaMinSchema, \
-    ColaboradorSchema, MidiaSchema
+from app.schemas.atualizacao_empresa_schema import InformacoesBasicas, InformacoesMensagens, InformacoesAgenda, InformacoesAssistentes, \
+    InformacoesCRM, InformacoesRDStationCRMClient, InformacoesRDStationDealStage, InformacoesFinanceiras, InformacoesAsaas, \
+    InformacoesCriarEmpresa, InformacoesColaborador
+from app.schemas.empresa_schema import EmpresaSchema, RDStationCRMClientSchema, RDStationCRMDealStageSchema, AsaasClientSchema, \
+    EmpresaMinSchema, ColaboradorSchema
 
 
 async def verificar_permissao_empresa(
@@ -36,7 +30,6 @@ async def verificar_permissao_empresa(
     return empresa
 
 
-# TODO: implementar services
 router = APIRouter(dependencies=[Depends(obter_usuario_logado)])
 
 @router.get("/", response_model=List[EmpresaMinSchema])
@@ -63,6 +56,7 @@ async def criar_empresa(
                 token=token,
                 fuso_horario=request.fuso_horario,
                 openai_api_key=request.openai_api_key,
+                elevenlabs_api_key=request.elevenlabs_api_key,
                 empresa_ativa=request.empresa_ativa
             )
             db.add(empresa)
@@ -89,6 +83,8 @@ async def alterar_informacoes_basicas(
     empresa.nome = request.nome
     empresa.fuso_horario = request.fuso_horario
     empresa.empresa_ativa = request.empresa_ativa
+    empresa.openai_api_key = request.openai_api_key
+    empresa.elevenlabs_api_key = request.elevenlabs_api_key
     db.commit()
     return empresa
 
@@ -142,63 +138,6 @@ async def remover_colaborador(
         return True
     return False
 
-@router.post("/{slug}/informacoes_basicas/midia")
-async def adicionar_midia(
-        slug: str,
-        request: InformacoesMidia,
-        empresa: Empresa = Depends(verificar_permissao_empresa),
-        db: Session = Depends(obter_sessao)
-):
-    midia = Midia(
-        url=request.url,
-        tipo=request.tipo,
-        mediatype=request.mediatype,
-        nome=request.nome,
-        atalho=request.atalho,
-        ordem=request.ordem,
-        id_empresa=empresa.id
-    )
-
-    db.add(midia)
-    db.commit()
-    db.refresh(midia)
-    return midia
-
-@router.put("/{slug}/informacoes_basicas/midia", response_model=MidiaSchema)
-async def alterar_midia(
-        slug: str,
-        request: InformacoesMidia,
-        empresa: Empresa = Depends(verificar_permissao_empresa),
-        db: Session = Depends(obter_sessao)
-):
-    midia = db.query(Midia).filter_by(id=request.id, id_empresa=empresa.id).first()
-    if not midia:
-        raise HTTPException(status_code=404, detail="Mídia não encontrada para essa empresa")
-
-    midia.url = request.url
-    midia.tipo = request.tipo
-    midia.mediatype = request.mediatype
-    midia.nome = request.nome
-    midia.atalho = request.atalho
-    midia.ordem= request.ordem
-
-    db.commit()
-    return midia
-
-@router.delete("/{slug}/informacoes_basicas/midia/{id}")
-async def remover_midia(
-        slug: str,
-        id: int,
-        empresa: Empresa = Depends(verificar_permissao_empresa),
-        db: Session = Depends(obter_sessao)
-):
-    midia = db.query(Midia).filter_by(id=id, id_empresa=empresa.id).first()
-    if midia:
-        db.delete(midia)
-        db.commit()
-        return True
-    return False
-
 @router.put("/{slug}/informacoes_assistentes", response_model=EmpresaSchema)
 async def alterar_informacoes_assistentes(
         slug: str,
@@ -214,115 +153,6 @@ async def alterar_informacoes_assistentes(
         empresa.assistentePadrao = request.assistente_padrao
         db.commit()
     return empresa
-
-@router.post("/{slug}/informacoes_assistentes/assistente")
-async def adicionar_assistente(
-        slug: str,
-        request: InformacoesAssistente,
-        empresa: Empresa = Depends(verificar_permissao_empresa),
-        db: Session = Depends(obter_sessao)
-):
-    assistente = Assistente(
-        assistantId=request.assistant_id,
-        nome=request.nome,
-        proposito=request.proposito,
-        atalho=request.atalho,
-        id_voz=request.voz,
-        id_empresa=empresa.id
-    )
-
-    db.add(assistente)
-    db.commit()
-    db.refresh(assistente)
-    return assistente
-
-@router.put("/{slug}/informacoes_assistentes/assistente", response_model=AssistenteSchema)
-async def alterar_assistente(
-        slug: str,
-        request: InformacoesAssistente,
-        empresa: Empresa = Depends(verificar_permissao_empresa),
-        db: Session = Depends(obter_sessao)
-):
-    assistente = db.query(Assistente).filter_by(id=request.id, id_empresa=empresa.id).first()
-    if not assistente:
-        raise HTTPException(status_code=404, detail="Assistente não encontrado para essa empresa")
-
-    assistente.nome = request.nome
-    assistente.assistantId = request.assistant_id
-    assistente.proposito = request.proposito
-    assistente.atalho = request.atalho
-    assistente.id_voz = request.voz
-    db.commit()
-    return assistente
-
-@router.delete("/{slug}/informacoes_assistentes/assistente/{id}")
-async def remover_assistente(
-        slug: str,
-        id: int,
-        empresa: Empresa = Depends(verificar_permissao_empresa),
-        db: Session = Depends(obter_sessao)
-):
-    if empresa.assistentePadrao == id:
-        raise HTTPException(status_code=403, detail="Não é possível excluir o assistente padrão da empresa. Troque o assistente padrão e tente novamente")
-
-    assistente = db.query(Assistente).filter_by(id=id, id_empresa=empresa.id).first()
-    if assistente:
-        db.delete(assistente)
-        db.commit()
-        return True
-    return False
-
-@router.post("/{slug}/informacoes_assistentes/voz")
-async def adicionar_voz(
-        slug: str,
-        request: InformacoesVoz,
-        empresa: Empresa = Depends(verificar_permissao_empresa),
-        db: Session = Depends(obter_sessao)
-):
-    voz = Voz(
-        voiceId=request.voice_id,
-        stability=request.stability,
-        similarity_boost=request.similarity_boost,
-        style=request.style,
-        id_empresa=empresa.id
-    )
-
-    db.add(voz)
-    db.commit()
-    db.refresh(voz)
-    return voz
-
-@router.put("/{slug}/informacoes_assistentes/voz", response_model=VozSchema)
-async def alterar_voz(
-        slug: str,
-        request: InformacoesVoz,
-        empresa: Empresa = Depends(verificar_permissao_empresa),
-        db: Session = Depends(obter_sessao)
-):
-    voz = db.query(Voz).filter_by(id=request.id, id_empresa=empresa.id).first()
-    if not voz:
-        raise HTTPException(status_code=404, detail="Voz não encontrada para essa empresa")
-
-    voz.voiceId = request.voice_id
-    voz.stability = request.stability
-    voz.similarity_boost = request.similarity_boost
-    voz.style = request.style
-    db.commit()
-    return voz
-
-@router.delete("/{slug}/informacoes_assistentes/voz/{id}")
-async def remover_voz(
-        slug: str,
-        id: int,
-        empresa: Empresa = Depends(verificar_permissao_empresa),
-        db: Session = Depends(obter_sessao)
-):
-    voz = db.query(Voz).filter_by(id=id, id_empresa=empresa.id).first()
-    if voz:
-        db.delete(voz)
-        db.commit()
-        return True
-    return False
 
 @router.put("/{slug}/informacoes_mensagens", response_model=EmpresaSchema)
 async def alterar_informacoes_mensagens(
@@ -341,152 +171,6 @@ async def alterar_informacoes_mensagens(
     db.commit()
     return empresa
 
-@router.post("/{slug}/informacoes_mensagens/digisac")
-async def adicionar_cliente_digisac(
-        slug: str,
-        request: InformacoesDigisac,
-        empresa: Empresa = Depends(verificar_permissao_empresa),
-        db: Session = Depends(obter_sessao)
-):
-    digisac_client = db.query(DigisacClient).filter_by(id_empresa=empresa.id).first()
-    if digisac_client:
-        raise HTTPException(status_code=404, detail="Essa empresa já possui um cliente do Digisac")
-
-    digisac_client = DigisacClient(
-        digisacSlug=request.slug,
-        service_id=request.service_id,
-        digisacToken=request.token,
-        digisacDefaultUser=request.user_id,
-        id_empresa=empresa.id
-    )
-
-    db.add(digisac_client)
-    db.commit()
-    db.refresh(digisac_client)
-    return digisac_client
-
-@router.put("/{slug}/informacoes_mensagens/digisac", response_model=DigisacClientSchema)
-async def alterar_informacoes_digisac(
-        slug: str,
-        request: InformacoesDigisac,
-        empresa: Empresa = Depends(verificar_permissao_empresa),
-        db: Session = Depends(obter_sessao)
-):
-    digisac_client = db.query(DigisacClient).filter_by(id_empresa=empresa.id).first()
-    if not digisac_client:
-        raise HTTPException(status_code=404, detail="Cliente do Digisac não encontrado para essa empresa")
-
-    digisac_client.digisacSlug = request.slug
-    digisac_client.digisacToken = request.token
-    digisac_client.digisacDefaultUser = request.user_id
-    digisac_client.service_id = request.service_id
-    db.commit()
-    return digisac_client
-
-@router.post("/{slug}/informacoes_mensagens/digisac/departamento")
-async def adicionar_departamento(
-        slug: str,
-        request: InformacoesDepartamento,
-        empresa: Empresa = Depends(verificar_permissao_empresa),
-        db: Session = Depends(obter_sessao)
-):
-    digisac_client = db.query(DigisacClient).filter_by(id_empresa=empresa.id).first()
-    if not digisac_client:
-        raise HTTPException(status_code=404, detail="Cliente do Digisac não encontrado para essa empresa")
-
-    departamento = Departamento(
-        atalho=request.atalho,
-        comentario=request.comentario,
-        departmentId=request.department_id,
-        userId=request.user_id,
-        departamento_confirmacao=request.departamento_confirmacao,
-        id_digisac_client=digisac_client.id
-    )
-
-    db.add(departamento)
-    db.commit()
-    db.refresh(departamento)
-    return departamento
-
-@router.put("/{slug}/informacoes_mensagens/digisac/departamento", response_model=DepartamentoSchema)
-async def alterar_informacoes_departamento(
-        slug: str,
-        request: InformacoesDepartamento,
-        empresa: Empresa = Depends(verificar_permissao_empresa),
-        db: Session = Depends(obter_sessao)
-):
-    digisac_client = db.query(DigisacClient).filter_by(id_empresa=empresa.id).first()
-    if not digisac_client:
-        raise HTTPException(status_code=404, detail="Cliente do Digisac não encontrado para essa empresa")
-
-    departamento = db.query(Departamento).filter_by(id=request.id, id_digisac_client=digisac_client.id).first()
-    if not departamento:
-        raise HTTPException(status_code=404, detail="Departamento não encontrado para essa cliente do Digisac")
-
-    departamento.atalho = request.atalho
-    departamento.comentario = request.comentario
-    departamento.departmentId = request.department_id
-    departamento.userId = request.user_id
-    departamento.departamento_confirmacao = request.departamento_confirmacao
-    db.commit()
-    return departamento
-
-@router.delete("/{slug}/informacoes_mensagens/digisac/departamento/{id}")
-async def remover_departamento(
-        slug: str,
-        id: int,
-        empresa: Empresa = Depends(verificar_permissao_empresa),
-        db: Session = Depends(obter_sessao)
-):
-    digisac_client = db.query(DigisacClient).filter_by(id_empresa=empresa.id).first()
-    if not digisac_client:
-        raise HTTPException(status_code=404, detail="Cliente do Digisac não encontrado para essa empresa")
-
-    departamento = db.query(Departamento).filter_by(id=id, id_digisac_client=digisac_client.id).first()
-    if departamento:
-        db.delete(departamento)
-        db.commit()
-        return True
-    return False
-
-@router.post("/{slug}/informacoes_mensagens/evolutionapi")
-async def adicionar_cliente_evolutionapi(
-        slug: str,
-        request: InformacoesEvolutionAPI,
-        empresa: Empresa = Depends(verificar_permissao_empresa),
-        db: Session = Depends(obter_sessao)
-):
-    evolutionapi_client = db.query(EvolutionAPIClient).filter_by(id_empresa=empresa.id).first()
-    if evolutionapi_client:
-        raise HTTPException(status_code=404, detail="Essa empresa já possui um cliente do EvolutionAPI")
-
-    evolutionapi_client = EvolutionAPIClient(
-        apiKey=request.api_key,
-        instanceName=request.instance_name,
-        id_empresa=empresa.id
-    )
-
-    db.add(evolutionapi_client)
-    db.commit()
-    db.refresh(evolutionapi_client)
-    return evolutionapi_client
-
-@router.put("/{slug}/informacoes_mensagens/evolutionapi", response_model=EvolutionAPIClientSchema)
-async def alterar_informacoes_evolutionapi(
-        slug: str,
-        request: InformacoesEvolutionAPI,
-        empresa: Empresa = Depends(verificar_permissao_empresa),
-        db: Session = Depends(obter_sessao)
-):
-    evolutionapi_client = db.query(EvolutionAPIClient).filter_by(id_empresa=empresa.id).first()
-    if not evolutionapi_client:
-        raise HTTPException(status_code=404, detail="Cliente do EvolutionAPI não encontrado para essa empresa")
-
-    evolutionapi_client.apiKey = request.api_key
-    evolutionapi_client.instanceName = request.instance_name
-    db.commit()
-    return evolutionapi_client
-
 @router.put("/{slug}/informacoes_agenda", response_model=EmpresaSchema)
 async def alterar_informacoes_agenda(
         slug: str,
@@ -497,162 +181,11 @@ async def alterar_informacoes_agenda(
     empresa.agenda_client_type = request.tipo_cliente
     empresa.tipo_cancelamento_evento = request.tipo_cancelamento_evento
     empresa.confirmar_agendamentos_ativo = request.ativar_confirmacao
+    empresa.duracao_evento = request.duracao_evento
+    empresa.hora_inicio_agenda = request.hora_inicio_agenda
+    empresa.hora_final_agenda = request.hora_final_agenda
     db.commit()
     return empresa
-
-@router.post("/{slug}/informacoes_agenda/agenda")
-async def adicionar_agenda(
-        slug: str,
-        request: InformacoesAgendaUnica,
-        empresa: Empresa = Depends(verificar_permissao_empresa),
-        db: Session = Depends(obter_sessao)
-):
-    agenda = Agenda(
-        endereco=request.endereco,
-        atalho=request.atalho,
-        id_empresa=empresa.id
-    )
-
-    db.add(agenda)
-    db.commit()
-    db.refresh(agenda)
-    return agenda
-
-@router.put("/{slug}/informacoes_agenda/agenda", response_model=AgendaSchema)
-async def alterar_informacoes_agenda(
-        slug: str,
-        request: InformacoesAgendaUnica,
-        empresa: Empresa = Depends(verificar_permissao_empresa),
-        db: Session = Depends(obter_sessao)
-):
-    agenda = db.query(Agenda).filter_by(id=request.id, id_empresa=empresa.id).first()
-    if not agenda:
-        raise HTTPException(status_code=404, detail="Agenda não encontrada para essa empresa")
-
-    agenda.endereco = request.endereco
-    agenda.atalho = request.atalho
-    db.commit()
-    return agenda
-
-@router.delete("/{slug}/informacoes_agenda/agenda/{id}")
-async def remover_agenda(
-        slug: str,
-        id: int,
-        empresa: Empresa = Depends(verificar_permissao_empresa),
-        db: Session = Depends(obter_sessao)
-):
-    agenda = db.query(Agenda).filter_by(id=id, id_empresa=empresa.id).first()
-    if agenda:
-        db.delete(agenda)
-        db.commit()
-        return True
-    return False
-
-@router.post("/{slug}/informacoes_agenda/outlook")
-async def adicionar_cliente_outlook(
-        slug: str,
-        request: InformacoesOutlook,
-        empresa: Empresa = Depends(verificar_permissao_empresa),
-        db: Session = Depends(obter_sessao)
-):
-    outlook_client = db.query(OutlookClient).filter_by(id_empresa=empresa.id).first()
-    if outlook_client:
-        raise HTTPException(status_code=404, detail="Essa empresa já possui um cliente do Outlook")
-
-    outlook_client = OutlookClient(
-        clientId=request.client_id,
-        tenantId=request.tenant_id,
-        clientSecret=request.client_secret,
-        duracaoEvento=request.duracao_evento,
-        usuarioPadrao=request.usuario_padrao,
-        horaInicioAgenda=request.hora_inicial,
-        horaFinalAgenda=request.hora_final,
-        timeZone=request.fuso_horario,
-        id_empresa=empresa.id
-    )
-
-    db.add(outlook_client)
-    db.commit()
-    db.refresh(outlook_client)
-    return outlook_client
-
-@router.put("/{slug}/informacoes_agenda/outlook", response_model=OutlookClientSchema)
-async def alterar_informacoes_outlook(
-        slug: str,
-        request: InformacoesOutlook,
-        empresa: Empresa = Depends(verificar_permissao_empresa),
-        db: Session = Depends(obter_sessao)
-):
-    outlook_client = db.query(OutlookClient).filter_by(id_empresa=empresa.id).first()
-    if not outlook_client:
-        raise HTTPException(status_code=404, detail="Cliente do Outlook não encontrado para essa empresa")
-
-    outlook_client.clientId = request.client_id
-    outlook_client.tenantId = request.tenant_id
-    outlook_client.clientSecret = request.client_secret
-    outlook_client.duracaoEvento = request.duracao_evento
-    outlook_client.usuarioPadrao = request.usuario_padrao
-    outlook_client.horaInicioAgenda = request.hora_inicial
-    outlook_client.horaFinalAgenda = request.hora_final
-    outlook_client.timeZone = request.fuso_horario
-    db.commit()
-    return outlook_client
-
-@router.post("/{slug}/informacoes_agenda/googlecalendar")
-async def alterar_informacoes_googlecalendar(
-        slug: str,
-        request: InformacoesGoogleCalendar,
-        empresa: Empresa = Depends(verificar_permissao_empresa),
-        db: Session = Depends(obter_sessao)
-):
-    googlecalendar_client = db.query(GoogleCalendarClient).filter_by(id_empresa=empresa.id).first()
-    if googlecalendar_client:
-        raise HTTPException(status_code=404, detail="Essa empresa já possui um cliente do Google Calendar")
-
-    googlecalendar_client = GoogleCalendarClient(
-        project_id=request.project_id,
-        private_key_id=request.private_key_id,
-        private_key=request.private_key,
-        client_email=request.client_email,
-        client_id=request.client_id,
-        client_x509_cert_url=request.client_x509_cert_url,
-        api_key=request.api_key,
-        duracao_evento=request.duracao_evento,
-        hora_inicio_agenda=request.hora_inicial,
-        hora_final_agenda=request.hora_final,
-        timezone=request.fuso_horario,
-        id_empresa=empresa.id
-    )
-
-    db.add(googlecalendar_client)
-    db.commit()
-    db.refresh(googlecalendar_client)
-    return googlecalendar_client
-
-@router.put("/{slug}/informacoes_agenda/googlecalendar", response_model=GoogleCalendarClientSchema)
-async def alterar_informacoes_googlecalendar(
-        slug: str,
-        request: InformacoesGoogleCalendar,
-        empresa: Empresa = Depends(verificar_permissao_empresa),
-        db: Session = Depends(obter_sessao)
-):
-    googlecalendar_client = db.query(GoogleCalendarClient).filter_by(id_empresa=empresa.id).first()
-    if not googlecalendar_client:
-        raise HTTPException(status_code=404, detail="Cliente do Google Calendar não encontrado para essa empresa")
-
-    googlecalendar_client.project_id = request.project_id
-    googlecalendar_client.private_key_id = request.private_key_id
-    googlecalendar_client.private_key = request.private_key
-    googlecalendar_client.client_email = request.client_email
-    googlecalendar_client.client_id = request.client_id
-    googlecalendar_client.client_x509_cert_url = request.client_x509_cert_url
-    googlecalendar_client.api_key = request.api_key
-    googlecalendar_client.duracao_evento = request.duracao_evento
-    googlecalendar_client.hora_inicio_agenda = request.hora_inicial
-    googlecalendar_client.hora_final_agenda = request.hora_final
-    googlecalendar_client.timezone = request.fuso_horario
-    db.commit()
-    return googlecalendar_client
 
 @router.put("/{slug}/informacoes_crm", response_model=EmpresaSchema)
 async def alterar_informacoes_crm(
