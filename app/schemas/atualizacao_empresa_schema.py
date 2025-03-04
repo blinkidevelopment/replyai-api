@@ -171,5 +171,5 @@ class InformacoesUsuario(BaseModel):
 
 
 class InformacoesExemploPrompt(BaseModel):
-    tipo_assistente: Optional[Literal["responder", "agendar", "retomar", "confirmar", "reescrever", "cobrar"]]
+    tipo_assistente: Optional[Literal["responder", "agendar", "retomar", "confirmar", "reescrever", "cobrar"]] = None
     prompt: str
