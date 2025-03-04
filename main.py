@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from app.routers import resposta, trabalho, empresa, usuario, assistente, voz, evolutionapi, digisac, midia, agenda, microsoft, google
+from app.routers import resposta, trabalho, empresa, usuario, assistente, voz, evolutionapi, digisac, midia, agenda, microsoft, google, exemplo
 from fastapi.middleware.cors import CORSMiddleware
 import os
 
@@ -24,6 +24,7 @@ app.include_router(usuario.router, prefix="/usuario", tags=["Usuarios"])
 app.include_router(agenda.router, prefix="/agenda", tags=["Agendas"])
 app.include_router(midia.router, prefix="/midia", tags=["Mídias"])
 app.include_router(assistente.router, prefix="/assistente", tags=["Assistentes"])
+app.include_router(exemplo.router, prefix="/exemplo", tags=["Exemplos"])
 app.include_router(voz.router, prefix="/voz", tags=["Vozes"])
 app.include_router(evolutionapi.router, prefix="/evolutionapi", tags=["EvolutionAPI"])
 app.include_router(digisac.router, prefix="/digisac", tags=["Digisac"])

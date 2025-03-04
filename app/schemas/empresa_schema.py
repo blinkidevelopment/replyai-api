@@ -169,3 +169,10 @@ class ListaUsuariosSchema(BaseModel):
     next_cursor: Optional[int] = None
     limit: int
     data: List[UsuarioSchema]
+
+class ExemploPromptSchema(BaseModel):
+    tipo_assistente: Literal["responder", "agendar", "retomar", "confirmar", "reescrever", "cobrar"]
+    prompt: str
+
+    class Config:
+        from_attributes = True

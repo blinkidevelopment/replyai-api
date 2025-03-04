@@ -168,3 +168,8 @@ class InformacoesUsuario(BaseModel):
     @classmethod
     def string_vazia(cls, valor):
         return valor if valor.strip() else None
+
+
+class InformacoesExemploPrompt(BaseModel):
+    tipo_assistente: Optional[Literal["responder", "agendar", "retomar", "confirmar", "reescrever", "cobrar"]]
+    prompt: str

@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Literal
 
 from fastapi import Form
 from pydantic import BaseModel, field_validator
@@ -9,7 +9,7 @@ class AssistenteSchema(BaseModel):
     id_openai: Optional[str] = None
     nome: str
     instrucoes: str
-    proposito: str
+    proposito: Literal["responder", "agendar", "retomar", "confirmar", "reescrever", "cobrar"]
     atalho: str
     voz: int
 

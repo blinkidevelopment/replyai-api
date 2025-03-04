@@ -2,7 +2,7 @@ import openai
 from fastapi import APIRouter, HTTPException
 from fastapi.params import Depends
 from openai import OpenAI
-from openai.types import ResponseFormatJSONObject
+from openai.types import ResponseFormatJSONObject, ResponseFormatText
 from sqlalchemy.orm import Session
 from typing import Annotated
 
@@ -33,8 +33,8 @@ async def criar_assistente(
     assistente = cliente.beta.assistants.create(
         model="gpt-4o",
         instructions=request.instrucoes,
-        name=request.nome,
-        response_format=ResponseFormatJSONObject(type="json_object"),
+        name=f"request.nome - {request.proposito}",
+        response_format=ResponseFormatJSONObject(type="json_object") if request.proposito != "reescrever" else ResponseFormatText(type="text"),
         temperature=1.0,
         tools=ferramentas,
         top_p=1.0
@@ -83,7 +83,7 @@ async def editar_assistente(
     assistente_db = db.query(Assistente).filter_by(id=id, id_empresa=empresa.id).first()
     if assistente_db:
         cliente.beta.assistants.update(
-            assistant_id=assistente_db.assistantId,
+            assistant_id=f"assistente_db.assistantId - {request.proposito}",
             name=request.nome,
             instructions=request.instrucoes
         )

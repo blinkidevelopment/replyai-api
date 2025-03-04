@@ -235,3 +235,11 @@ class AsaasClient(Base):
     id_empresa = Column(Integer, ForeignKey("empresas.id"))
 
     empresa = relationship("Empresa", backref="asaas_client")
+
+
+class ExemploPrompt(Base):
+    __tablename__ = "exemplos_prompt"
+
+    id = Column(Integer, primary_key=True, index=True)
+    tipo_assistente = Column(String)
+    prompt = Column(String)
