@@ -21,11 +21,12 @@ from app.utils.agenda_client import AgendaClient, Schedule, EventoTituloAgenda, 
 
 
 class AccessTokenCredential(TokenCredential):
-    def __init__(self, access_token: str, refresh_token: str, expires_in: int, client_db: OutlookClient, db: Session):
+    def __init__(self, access_token: str, refresh_token: str, expires_in: int, expires_at: float, client_db: OutlookClient, db: Session):
         self.client_id = os.getenv("MICROSOFT_CLIENT_ID")
         self.client_secret = os.getenv("MICROSOFT_CLIENT_SECRET")
         self.access_token = access_token
         self.refresh_token = refresh_token
+        self.expires_at = expires_at
         self.expires_in = expires_in
         self.client_db = client_db
         self.db_session = db
@@ -37,8 +38,7 @@ class AccessTokenCredential(TokenCredential):
         )
 
     def is_token_expired(self):
-        expires_at = datetime.now(timezone.utc).timestamp() + self.expires_in
-        return datetime.now(timezone.utc).timestamp() >= expires_at - 60
+        return datetime.now(timezone.utc).timestamp() >= self.client_db.expires_at - 60
 
     def get_token(self, *scopes, **kwargs):
         if not self.is_token_expired():
@@ -57,6 +57,7 @@ class AccessTokenCredential(TokenCredential):
             self.client_db.access_token = access_token
             self.client_db.refresh_token = refresh_token
             self.client_db.expires_in = expires_in
+            self.client_db.expires_at = datetime.now(timezone.utc).timestamp() + expires_in
             self.db_session.commit()
 
             return AccessToken(self.access_token, result["expires_in"])
@@ -65,8 +66,8 @@ class AccessTokenCredential(TokenCredential):
 
 
 class Outlook(AgendaClient):
-    def __init__(self, access_token: str, refresh_token: str, expires_in: int, usuarioPadrao: str, duracaoEvento: int, horaInicioAgenda: str, horaFinalAgenda: str, timeZone: str, client_db: OutlookClient, db: Session):
-        credential = AccessTokenCredential(access_token, refresh_token, expires_in, client_db, db)
+    def __init__(self, access_token: str, refresh_token: str, expires_in: int, expires_at: float, usuarioPadrao: str, duracaoEvento: int, horaInicioAgenda: str, horaFinalAgenda: str, timeZone: str, client_db: OutlookClient, db: Session):
+        credential = AccessTokenCredential(access_token, refresh_token, expires_in, expires_at, client_db, db)
         scopes = ["https://graph.microsoft.com/.default"]
 
         self.graph_client = GraphServiceClient(credentials=credential, scopes=scopes)

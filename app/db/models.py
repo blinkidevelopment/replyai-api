@@ -180,6 +180,7 @@ class OutlookClient(Base):
     access_token = Column(String)
     refresh_token = Column(String)
     expires_in = Column(Integer)
+    expires_at = Column(Float)
     usuarioPadrao = Column(String)
     timeZone = Column(String)
     id_empresa = Column(Integer, ForeignKey("empresas.id"))

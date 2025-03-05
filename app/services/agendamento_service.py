@@ -202,6 +202,7 @@ def criar_agenda_client(empresa: Empresa, db: Session):
                 access_token=outlook_client_db.access_token,
                 refresh_token=outlook_client_db.refresh_token,
                 expires_in=outlook_client_db.expires_in,
+                expires_at=outlook_client_db.expires_at,
                 usuarioPadrao=outlook_client_db.usuarioPadrao,
                 duracaoEvento=empresa.duracao_evento,
                 horaInicioAgenda=empresa.hora_inicio_agenda,

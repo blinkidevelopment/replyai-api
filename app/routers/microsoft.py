@@ -1,5 +1,7 @@
 import os
 import urllib.parse
+from datetime import datetime, timezone
+
 import requests
 from fastapi import APIRouter, Request, HTTPException
 from fastapi.params import Depends
@@ -48,6 +50,7 @@ async def callback(
         access_token = token_data.get("access_token")
         refresh_token = token_data.get("refresh_token")
         expires_in = token_data.get("expires_in")
+        expires_at = datetime.now(timezone.utc).timestamp() + expires_in
 
         graph_headers = {"Authorization": f"Bearer {access_token}"}
         user_info_response = requests.get("https://graph.microsoft.com/v1.0/me", headers=graph_headers)
@@ -65,7 +68,7 @@ async def callback(
         if outlook_client_db:
             outlook_client_db.access_token = access_token
             outlook_client_db.refresh_token = refresh_token
-            outlook_client_db.expires_in = expires_in
+            outlook_client_db.expires_at = expires_at
             outlook_client_db.usuarioPadrao = user_email
         else:
             outlook = OutlookClient(
@@ -75,6 +78,7 @@ async def callback(
                 access_token=access_token,
                 refresh_token=refresh_token,
                 expires_in=expires_in,
+                expires_at=expires_at,
                 duracaoEvento=0,
                 usuarioPadrao=user_email,
                 horaInicioAgenda="",
