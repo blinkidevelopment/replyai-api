@@ -33,7 +33,7 @@ async def criar_assistente(
     assistente = cliente.beta.assistants.create(
         model="gpt-4o",
         instructions=request.instrucoes,
-        name=f"request.nome - {request.proposito}",
+        name=f"{request.nome} - {request.proposito}",
         response_format=ResponseFormatJSONObject(type="json_object") if request.proposito != "reescrever" else ResponseFormatText(type="text"),
         temperature=1.0,
         tools=ferramentas,
@@ -83,8 +83,8 @@ async def editar_assistente(
     assistente_db = db.query(Assistente).filter_by(id=id, id_empresa=empresa.id).first()
     if assistente_db:
         cliente.beta.assistants.update(
-            assistant_id=f"assistente_db.assistantId - {request.proposito}",
-            name=request.nome,
+            assistant_id=assistente_db.assistantId,
+            name=f"{request.nome} - {request.proposito}",
             instructions=request.instrucoes
         )
 
